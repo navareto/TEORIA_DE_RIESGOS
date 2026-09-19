@@ -473,11 +473,62 @@ taller trabaja en logarítmicos, así que le corresponde `log(1.07)` = **6,7659 
 Usar la otra conversión del capítulo 3 —6,7668 %— no cambia ninguna conclusión,
 pero se declara cuál se usa y no se mezclan.
 
+```{r}
+#| label: parte3-tangente
+# Cambio de variable del capitulo: minimizar y'Sy sujeto a (mu-rf)'y=1, y>=0;
+# w = y/sum(y). Con tope opcional: w_i <= tope <=> y_i <= tope*sum(y), que es
+# LINEAL en y (no en w), asi que se agrega como restricciones adicionales sin
+# cambiar la naturaleza del problema.
+tangente <- function(Sig = S, med = mu, rf_ = rf, tope = NULL) {
+  n <- length(med)
+  # tope*n == 1 deja un unico punto factible (todos exactamente en el tope):
+  # no hay nada que optimizar y el limite es degenerado para solve.QP.
+  if (!is.null(tope) && isTRUE(all.equal(tope * n, 1))) return(rep(1 / n, n))
+  Amat <- cbind(med - rf_, diag(n))
+  bvec <- c(1, rep(0, n))
+  if (!is.null(tope)) {
+    Amat <- cbind(Amat, tope * matrix(1, n, n) - diag(n))
+    bvec <- c(bvec, rep(0, n))
+  }
+  y <- pmax(solve.QP(2 * Sig, rep(0, n), Amat, bvec, meq = 1)$solution, 0)
+  y / sum(y)
+}
+
+wtan <- tangente()
+sharpe_activos <- (mu - rf) / sqrt(diag(S))
+
+round(c(wtan * 100, conv = ret_conv(wtan) * 100, real = ret_real(wtan) * 100,
+        vol = vol(wtan) * 100, sharpe = (ret_conv(wtan) - rf) / vol(wtan)), 4)
+round(sharpe_activos, 4)
+```
+
 **3.1** Calcule la cartera tangente sin cortos con el cambio de variable del
 capítulo: minimizar `y'Sy` sujeto a `(mu-rf)'y = 1` e `y >= 0`, y normalizar.
 Debe obtener **5,52 · 0 · 0 · 94,48** con retorno **12,67 %**, volatilidad
 **35,28 %** y razón de Sharpe **0,1673**. Reporte también las razones de Sharpe de
 los cuatro emisores por separado.
+
+Confirmado: **5,52 · 0 · 0 · 94,48**, retorno `w′μ` **12,67 %** (real 13,18 %),
+volatilidad **35,28 %**, Sharpe **0,1673**. Las razones de Sharpe individuales
+—Ecopetrol 0,0593, Bogotá −0,1948, Grupo Sura ≈0,0000, ISA 0,1670— explican de
+inmediato la composición: la tangente sin cortos solo puede tomar posiciones
+largas, así que ignora a Bogotá (Sharpe muy negativo) y a Grupo Sura (Sharpe
+nulo) y concentra casi todo en ISA, el de mejor Sharpe individual, con una
+pizca de Ecopetrol para diversificar.
+
+```{r}
+#| label: parte3-sharpe-minvar-sura
+sharpe_minvar_conv <- (ret_conv(wg) - rf) / vol(wg)
+sharpe_minvar_real <- (ret_real(wg) - rf) / vol(wg)
+
+mu_sura     <- mu["GRUPOSURA.CL"]
+sd_sura     <- sqrt(S["GRUPOSURA.CL", "GRUPOSURA.CL"])
+sharpe_sura <- (mu_sura - rf) / sd_sura
+
+round(c(sharpe_minvar_conv = sharpe_minvar_conv, sharpe_minvar_real = sharpe_minvar_real,
+        mu_sura_pct = mu_sura * 100, rf_pct = rf * 100,
+        diff_retorno_pp = (mu_sura - rf) * 100, sharpe_sura = sharpe_sura), 7)
+```
 
 **3.2** Dos cifras del capítulo que conviene volver a producir con su propio
 código, porque son las que más incomodan: la razón de Sharpe de la cartera de
@@ -489,10 +540,49 @@ negativo, pero esa cartera rindió **10,22 %** de verdad contra el 6,7659 % del 
 y su razón real es **+0,1445**. Produzca las dos columnas y diga qué parte del
 reproche a la mínima varianza sobrevive a la corrección, porque algo sobrevive.
 
+Confirmado: **−0,0188** con `w′μ` y **+0,1445** con el retorno real. Lo que
+sobrevive a la corrección no es "la mínima varianza pierde contra el TES" —eso
+era enteramente un artefacto de la convención—, sino algo más modesto: su Sharpe
+real (0,1445) sigue siendo el más bajo entre las carteras de referencia del
+taller (compárese con 0,1673 de la tangente), así que mínima varianza sigue
+siendo la peor relación riesgo-retorno del conjunto, solo que "peor" no es lo
+mismo que "negativa frente al TES".
+
 **La segunda no es de convención** —Grupo Sura es un activo solo, y ahí `w′μ` sí es
 su retorno— pero es de magnitud: las cuatro diezmilésimas de punto porcentual son
 del **retorno** (6,7655 % contra 6,7659 %), y la razón de Sharpe vale
 **−0,0000094**, cien veces menos. Escriba la cifra que corresponde a cada cosa.
+
+Confirmado exactamente: retorno de Grupo Sura **6,7655 %** contra rf **6,7659 %**
+—una diferencia de **−0,0004 pp**—, que al dividir por su volatilidad (42,57 %)
+da Sharpe **−0,0000094**. La diferencia de 0,0004 pp es de **retorno**; el
+−0,0000094 es de **Sharpe**; son la misma comparación en dos escalas, y
+confundirlas es tratar una unidad de retorno como si fuera una unidad de Sharpe.
+
+```{r}
+#| label: parte3-exclusiones
+# frontera() de la parte 1 esta fijada a 4 activos (diag(4) hardcodeado); para
+# reoptimizar con 3 (excluyendo uno) hace falta una minima varianza generica.
+minvar_n <- function(Sig, med) {
+  n <- length(med)
+  A <- cbind(rep(1, n), diag(n)); b <- c(1, rep(0, n))
+  pmax(solve.QP(2 * Sig, rep(0, n), A, b, meq = 1)$solution, 0)
+}
+
+vols_exclusion <- sapply(seq_along(acciones), function(i) {
+  idx <- setdiff(seq_along(acciones), i)
+  Si  <- S[idx, idx]
+  wi  <- minvar_n(Si, mu[idx])
+  vol(wi, Si)
+})
+names(vols_exclusion) <- acciones
+
+Sdiag  <- diag(diag(S))
+wg_apagadas <- frontera(Sig = Sdiag)
+
+round(sort((vols_exclusion - vol(wg)) * 100), 3)
+round(c(sura_correlaciones_apagadas = wg_apagadas[3] * 100, sura_real = wg[3] * 100), 2)
+```
 
 Después responda a quien concluya de la segunda que Grupo Sura debe salir del
 universo de inversión. **No lo defienda por sus correlaciones**, que es la
@@ -504,10 +594,54 @@ correlaciones apagadas le tocaría **19,17 %** y con la matriz real recibe
 mida cuánto sube la volatilidad de la mínima varianza sin él, haga lo mismo con los
 otros tres y ordene las cuatro exclusiones.
 
+Confirmado: con correlaciones apagadas Grupo Sura recibiría **19,17 %** y con la
+matriz real recibe **15,97 %** —le restan 3,2 pp por sus covarianzas, no se las
+suman—, así que "sáquelo porque correlaciona mucho" es literalmente lo contrario
+de lo que hace el optimizador con él. Ordenando el costo de excluir cada emisor
+(cuánto sube la vol de la mínima varianza sin él): **Grupo Sura (+0,91 pp)** <
+Ecopetrol (+1,26 pp) < ISA (+1,71 pp) < **Banco de Bogotá (+3,86 pp)**. Grupo
+Sura es, de los cuatro, el que **menos** cuesta sacar —no porque sea malo, sino
+porque su función en la cartera (diversificar frente a Bogotá) la cumplen
+razonablemente bien los otros tres—; el verdadero candidato a "no tocar" es
+Bogotá, cuya salida es, por mucho, la más cara de las cuatro.
+
+```{r}
+#| label: parte3-cml
+sharpe_tan_conv    <- (ret_conv(wtan) - rf) / vol(wtan)
+cml_conv_declarada <- rf + sharpe_tan_conv * vol(w0)
+a_frac             <- vol(w0) / vol(wtan)
+
+# La recta rf + Sharpe*vol es una relacion en la convencion w'mu (aditiva). El
+# retorno REAL de la mezcla no se extrapola linealmente desde el Sharpe real
+# (el arrastre por varianza escala con a^2, no con a): hay que simular la
+# mezcla real dia a dia, igual que ret_real() hace con cualquier cartera.
+simple_tan_diario <- as.numeric((exp(r) - 1) %*% wtan)
+mix_simple        <- a_frac * simple_tan_diario + (1 - a_frac) * (exp(rf / 252) - 1)
+ret_real_mix      <- mean(log(1 + mix_simple)) * 252
+
+round(c(cml_conv_pct = cml_conv_declarada * 100, declarada_conv_pct = ret_conv(w0) * 100,
+        diff_conv_pp = (cml_conv_declarada - ret_conv(w0)) * 100,
+        pct_en_tangente = a_frac * 100, pct_en_tes = (1 - a_frac) * 100), 2)
+round(c(cml_real_pct = ret_real_mix * 100, declarada_real_pct = ret_real(w0) * 100,
+        diff_real_pp = (ret_real_mix - ret_real(w0)) * 100,
+        millones = W * (exp(ret_real_mix) - exp(ret_real(w0)))), 2)
+```
+
 **3.3** Sobre la CML, calcule qué retorno se consigue con la volatilidad de la
 cartera declarada (**25,02 %**) — debe dar **10,95 %**, esto es **3,26 pp** más—.
 Diga cuánto del fondo iría a la tangente y cuánto al TES, y por qué esa mezcla
 **no** es ejecutable para un fondo de pensiones.
+
+Confirmado: **10,95 %**, **3,26 pp** más que la declarada. Esa cartera implica
+poner **70,93 %** del fondo en la tangente (5,52 % Ecopetrol, 94,48 % ISA) y
+**29,07 %** en el TES. No es ejecutable para un fondo de pensiones por al menos
+dos razones que un comité entiende sin estadística: (i) el 94,5 % de la porción
+riesgosa concentrado en un solo emisor viola cualquier régimen de inversión
+razonable —y probablemente el límite regulatorio propio del fondo—, y (ii) un
+fondo de pensiones tiene pasivos (las mesadas futuras) que no se cubren con la
+combinación que maximiza Sharpe; la tangente es la mejor cartera para quien solo
+le importa riesgo-retorno del activo, no para quien tiene que pagar pensiones en
+fechas específicas.
 
 Y mida esos 3,26 pp otra vez sin la convención, que es donde la promesa se encoge:
 con los dos retornos de verdad la recta ofrece **12,60 %** contra **11,83 %**, o sea
@@ -515,11 +649,49 @@ con los dos retornos de verdad la recta ofrece **12,60 %** contra **11,83 %**, o
 cuatro veces menos de lo que la convención sugiere. Diga cuál de las dos cifras le
 llevaría al comité y por qué la otra no.
 
+Confirmado exactamente: **12,60 %** contra **11,83 %** reales, **0,77 pp**,
+**6 990 millones** al año compuestos. Es la cifra de **0,77 pp / 6 990 millones**
+la que se lleva a un comité, no los 3,26 pp: esa última es una comparación entre
+dos números `w′μ` que nunca fueron el retorno de ninguna cartera —ni de la
+declarada ni de la mezcla tangente-TES—, así que presentarla sin decir que es
+convención es prometer una ganancia 4 veces mayor a la que el fondo efectivamente
+recibiría el día que compare la plata real contra el TES real.
+
+```{r}
+#| label: parte3-tope-tangente
+tope_propio  <- tope   # el mismo `tope` fijado en la parte 2 (0.35)
+wtan_propio  <- tangente(tope = tope_propio)
+sharpe_propio <- (ret_conv(wtan_propio) - rf) / vol(wtan_propio)
+
+topes   <- c(0.25, 0.30, 0.35, 0.40)
+sharpes_topes <- sapply(topes, function(t) {
+  wt <- tangente(tope = t)
+  (ret_conv(wt) - rf) / vol(wt)
+})
+names(sharpes_topes) <- topes
+
+round(c(wtan_propio * 100, sharpe = sharpe_propio), 4)
+round(sharpes_topes, 4)
+all(diff(sharpes_topes) >= 0)
+```
+
 **3.4** Repita 3.1 con **su** tope de la parte 2. Reporte el Sharpe alcanzable y
 compárelo con el 0,1673 sin tope y con el **0,0714** del tope del 30 %. Ordene los
 cuatro topes posibles del taller —0,25, 0,30, 0,35 y 0,40— por el Sharpe que
 permiten y diga si el orden es monótono; si lo es, explique por qué tenía que
 serlo.
+
+Con mi tope (35 %) la tangente queda **35 · 0 · 30 · 35** y el Sharpe alcanzable
+es **0,1056** —entre el 0,0714 del tope del 30 % y el 0,1673 sin tope, como debe
+ser—. Los cuatro topes ordenados dan **0,0198 (25 %) < 0,0714 (30 %) < 0,1056
+(35 %) < 0,1200 (40 %)**: estrictamente monótono creciente. Tenía que serlo por
+una razón puramente de conjuntos, no de datos: el conjunto factible con tope
+0,25 está contenido en el de 0,30, que está contenido en el de 0,35, que está
+contenido en el de 0,40 —cualquier cartera permitida con un tope más estricto
+sigue siendo permitida con uno más laxo—, así que el máximo de Sharpe sobre un
+conjunto más grande nunca puede ser menor que sobre uno más chico. Un tope más
+laxo nunca puede *empeorar* el mejor Sharpe alcanzable; en el peor de los casos
+lo deja igual.
 
 ---
 
