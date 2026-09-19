@@ -561,8 +561,16 @@ confundirlas es tratar una unidad de retorno como si fuera una unidad de Sharpe.
 
 ```{r}
 #| label: parte3-exclusiones
+# Pregunta hipotetica, no un cambio de cartera: "si el activo i no existiera
+# en el universo, cuanto subiria el riesgo de la minima varianza?". Para
+# contestarla se reoptimiza 4 veces, cada vez con los 3 activos restantes, y se
+# compara cada resultado contra la minima varianza real de los 4 (23.93%). El
+# portafolio del taller sigue siendo siempre el de los 4 activos completos;
+# estos 4 calculos de 3 activos son solo la vara de medir el costo de sacar
+# a cada uno, uno a la vez.
+#
 # frontera() de la parte 1 esta fijada a 4 activos (diag(4) hardcodeado); para
-# reoptimizar con 3 (excluyendo uno) hace falta una minima varianza generica.
+# reoptimizar con 3 hace falta una minima varianza generica.
 minvar_n <- function(Sig, med) {
   n <- length(med)
   A <- cbind(rep(1, n), diag(n)); b <- c(1, rep(0, n))
@@ -597,7 +605,11 @@ otros tres y ordene las cuatro exclusiones.
 Confirmado: con correlaciones apagadas Grupo Sura recibiría **19,17 %** y con la
 matriz real recibe **15,97 %** —le restan 3,2 pp por sus covarianzas, no se las
 suman—, así que "sáquelo porque correlaciona mucho" es literalmente lo contrario
-de lo que hace el optimizador con él. Ordenando el costo de excluir cada emisor
+de lo que hace el optimizador con él. Nota de método: para medir "cuánto cuesta
+sacar a un emisor" hay que, necesariamente, reoptimizar sin él —son 4 carteras
+hipotéticas de 3 activos, una por cada exclusión posible, usadas solo como vara
+de medir; el portafolio del taller en el resto del documento sigue siendo
+siempre el de los 4 activos completos. Ordenando el costo de excluir cada emisor
 (cuánto sube la vol de la mínima varianza sin él): **Grupo Sura (+0,91 pp)** <
 Ecopetrol (+1,26 pp) < ISA (+1,71 pp) < **Banco de Bogotá (+3,86 pp)**. Grupo
 Sura es, de los cuatro, el que **menos** cuesta sacar —no porque sea malo, sino
