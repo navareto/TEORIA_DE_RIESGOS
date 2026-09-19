@@ -1023,10 +1023,26 @@ siquiera el costo de rebalanceo.
 Obligatoria. Una fila por intercambio con la IA, en orden cronológico. Si no usó
 IA en absoluto, escríbalo aquí y firme esa afirmación.
 
+Uso Claude (Sonnet 5, vía Claude Code) como asistente de nivel 3 en todas las
+partes de este taller **excepto la 5**, que hice sin asistencia como exige el
+taller. La bitácora completa de la sesión es larga; resumo aquí los
+intercambios sustantivos, en orden:
+
 | # | Parte | Prompt (resumido) | Qué devolvió | Qué hice con eso |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
+| 1 | 1.2 | Confirmar que la corrección de `uniroot()` (acotarlo al lado eficiente de la frontera) da el retorno ~8,43 % esperado, y seguir con el resto del taller | Verificó la corrección en R (24,39992 % / 8,42862 %) y confirmó que coincidía con el capítulo | Insertó el bloque `parte1-brechas` con las dos brechas y su conversión a millones |
+| 2 | — | Qué modelo (Sonnet vs. Opus) conviene para este taller, dado el balance costo/calidad | Recomendó Sonnet 5 para el trabajo cuantitativo verificado; reservar Opus 5 para la redacción persuasiva de la parte 7 | Se mantuvo Sonnet 5 para las partes 1-4 |
+| 3 | 2.1-2.4 | Aprobación para la parte 2, y si se pueden insertar gráficos dinámicos que aporten a la explicación | Calculó ventana/tope propios (documento → 750 ruedas, 35 %), verificó 2.1-2.4 en R y añadió fronteras interactivas (`plotly`) | Insertó los bloques verificados y los gráficos en 1.3 y 2.4 |
+| 4 | — | Pedido de una guía de sustentación al final, para defender el trabajo oralmente | Aclaró que sería una sección aparte al cierre, distinta de la auditoría de la parte 5 | Quedó planificada para el final del documento |
+| 5 | — | Si el trabajo se guarda directo en la carpeta del computador; pedido de comitear y pushear el avance regularmente | Confirmó la ruta del repo local y estableció el flujo de commit/push por parte | Se comiteó y pusheó cada parte terminada desde entonces |
+| 6 | 7 (preparación) | Experiencia propia en juntas directivas del sector financiero: suelen exigir rentabilidad y hay que "convencerlas" del sacrificio de riesgo; el profesor valora ese juicio experto | Guardó el contexto para redactar la recomendación de la parte 7 con ese enfoque | Nota de contexto reservada para la parte 7 |
+| 7 | 3.1-3.4 | Aprobación para la parte 3, pidiendo que los resultados queden soportados con teoría, recordando los puntos de auditoría de la parte 5 | Implementó y verificó 3.1-3.4 en R, incluida una verificación cruzada independiente en tope 30 % que reprodujo el Sharpe de referencia (0,0714) | Insertó los bloques con la prosa ligada a cada punto de auditoría |
+| 8 | 3.2 | Confusión sobre por qué el análisis de exclusión de activos usa "3" en vez de los 4 del portafolio | Explicó que son 4 comparaciones hipotéticas de 3 activos para medir el costo de excluir cada uno, sin cambiar la cartera real | Ajustó la redacción del `.qmd` para dejarlo explícito |
+| 9 | — | Tiempo estimado para terminar el resto del taller | Dio una estimación de ~1,5-2 horas de trabajo activo por parte | Informativo, sin cambios al documento |
+| 10 | — | Cuándo cambiar a Opus, o si terminar y auditar con Opus | Aclaró que la parte 5 no se puede hacer con ningún modelo (regla del taller); sugirió Opus 5 solo para la parte 7 | Se acordó seguir con Sonnet 5 hasta la parte 7 |
+| 11 | 4.1-4.5 | Aprobación para la parte 4 (turnover, costo de perseguir la frontera) | Implementó y verificó 4.1-4.5, incluido un backtest fuera de muestra para cuantificar la pérdida de alargar la ventana | Insertó los bloques con el área apilada interactiva |
+| 12 | 5 | Pedido de ayuda para la parte 5 mediante preguntas socráticas, sin que la IA viera la respuesta real a auditar | Explicó el límite (preparación conceptual sí, auditoría de la respuesta real no) y planteó 3 preguntas de preparación | Pausado por decisión propia para retomarlo al final |
+| 13 | — | Decisión de posponer la parte 5 y avanzar primero con el resto | — | Se continuó con las partes 6 y 7 antes de retomar la parte 5 |
 
 ---
 
