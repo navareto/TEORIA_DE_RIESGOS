@@ -9,7 +9,7 @@ date: today
 #| label: preparacion
 #| include: false
 options(digits = 7)
-ruta <- "../datos/bvc_diario.csv"
+ruta <- "../../datos/bvc_diario.csv"
 stopifnot(file.exists(ruta))
 ```
 
@@ -90,15 +90,13 @@ de riesgo o se convierta a pesos, aparezcan las dos**.
 
 ## Parte 1 · Reproducir el capítulo
 
-Antes del primer cálculo, declare en tres líneas: qué ventana de estimación, qué
-convención de retornos, qué restricciones y qué periodicidad de reestimación va a
-usar. Todo lo que siga se juzga contra esa declaración.
+Ventana de estimación: panel completo (1.917 observaciones, todo el histórico disponible). Convención de retornos: logarítmicos diarios, anualizados ×252. Restricciones: sin ventas en corto (w ≥ 0), pesos suman 1. Periodicidad de reestimación: no aplica en esta parte (cartera estática); se define en la Parte 4.
 
 ```{r}
 #| label: parte1-carga
 suppressPackageStartupMessages(library(quadprog))
 
-precios  <- read.csv("../datos/bvc_diario.csv")
+precios  <- read.csv("../../datos/bvc_diario.csv")
 acciones <- c("ECOPETROL.CL", "BOGOTA.CL", "GRUPOSURA.CL", "ISA.CL")
 w0 <- c(0.30, 0.20, 0.25, 0.25)          # la decisión declarada del curso (D-A)
 W  <- 800000                             # millones de pesos
@@ -130,10 +128,54 @@ round(rbind(declarada = c(w0 * 100, conv = ret_conv(w0) * 100,
                           ret_real(wg) * 100, vol(wg) * 100)), 2)
 ```
 
+```{r}
+#| label: parte1-correlaciones
+cor(r)
+mean(cor(r)[upper.tri(cor(r))])
+```
+
 **1.1** Compruebe que obtiene las cifras del capítulo: la cartera declarada rinde
 **7,69 %** con una volatilidad del **25,02 %**, y la de mínima varianza mueve
 **23,93 %** con pesos **20,76 · 38,13 · 15,97 · 25,14**. Reporte además las seis
 correlaciones de pares y su promedio, que debe ser **0,227**.
+
+```{r}
+#| label: parte1-brechas
+# Punto de la frontera al mismo retorno (conv) que la declarada -> compara riesgo
+w_mismoret   <- frontera(ret_conv(w0))
+vol_mismoret <- vol(w_mismoret)
+
+# Punto de la frontera al mismo riesgo que la declarada -> compara retorno.
+# uniroot() se acota al lado EFICIENTE de la frontera: entre el retorno de
+# minima varianza (wg) y el retorno maximo alcanzable (max(mu)). Buscar en todo
+# el rango de mu cruza la minima varianza, donde vol(frontera(objetivo)) no es
+# monotona, y f() no cambia de signo en los extremos.
+buscar_ret <- function(objetivo_riesgo, rango) {
+  f <- function(retorno) vol(frontera(retorno)) - objetivo_riesgo
+  uniroot(f, rango)$root
+}
+ret_mismoriesgo <- buscar_ret(vol(w0), c(ret_conv(wg), max(mu)))
+w_mismoriesgo   <- frontera(ret_mismoriesgo)
+
+# Las dos brechas, en la convencion del capitulo (w'mu)
+brecha_riesgo_pp   <- (vol(w0) - vol_mismoret) * 100
+brecha_retorno_pp  <- (ret_mismoriesgo - ret_conv(w0)) * 100
+
+# La misma brecha de retorno, sin la convencion (con los dos retornos de verdad)
+brecha_retorno_real_pp <- (ret_real(w_mismoriesgo) - ret_real(w0)) * 100
+
+# Conversion a millones sobre los W = 800 000 del fondo
+brecha_riesgo_millones  <- brecha_riesgo_pp / 100 * W
+brecha_retorno_millones <- W * (exp(ret_real(w_mismoriesgo)) - exp(ret_real(w0)))
+
+round(c(vol_mismoret_pct      = vol_mismoret * 100,
+        ret_mismoriesgo_pct   = ret_mismoriesgo * 100,
+        brecha_riesgo_pp      = brecha_riesgo_pp,
+        brecha_retorno_pp     = brecha_retorno_pp,
+        brecha_retorno_real_pp = brecha_retorno_real_pp,
+        brecha_riesgo_millones  = brecha_riesgo_millones,
+        brecha_retorno_millones = brecha_retorno_millones), 4)
+```
 
 **1.2** Calcule el punto de la frontera **al mismo retorno** de la declarada
 —debe dar **24,40 %** de volatilidad, es decir **0,62 pp** menos— y el punto **al
@@ -150,6 +192,44 @@ convención, porque los 0,74 pp son cifra de `w′μ`: con los dos retornos de v
 **0,47 pp**, que compuestos dan **4 232 millones** al año. Reporte las tres cifras
 —4 960, 0,47 pp y 4 232— y diga cuál de ellas es la que puede ir a un acta de comité.
 
+```{r}
+#| label: parte1-frontera-datos
+retornos <- seq(min(mu) + 1e-6, max(mu) - 1e-6, length.out = 25)
+fr <- t(sapply(retornos, function(m) {
+  w <- frontera(m)
+  c(ret = ret_conv(w), vol = vol(w))
+}))
+vol_activos <- sqrt(diag(S))
+
+round(cbind(vol_pct = vol_activos * 100, ret_pct = mu * 100), 2)
+round(c(max_mu_pct = max(mu) * 100, max_frontera_pct = max(fr[, "ret"]) * 100), 3)
+```
+
+```{r}
+#| label: parte1-frontera-grafico
+suppressPackageStartupMessages(library(plotly))
+etiquetas <- c("Ecopetrol", "B. Bogotá", "Gr. Sura", "ISA")
+
+plot_ly() |>
+  add_trace(x = fr[, "vol"] * 100, y = fr[, "ret"] * 100, type = "scatter", mode = "lines",
+            name = "Frontera eficiente", line = list(color = "steelblue", width = 3),
+            hovertemplate = "vol %{x:.2f}%<br>ret %{y:.2f}%<extra></extra>") |>
+  add_trace(x = vol_activos * 100, y = mu * 100, type = "scatter", mode = "markers+text",
+            text = etiquetas, textposition = "top center", name = "Emisores",
+            marker = list(color = "darkorange", size = 10),
+            hovertemplate = "%{text}<br>vol %{x:.2f}%<br>ret %{y:.2f}%<extra></extra>") |>
+  add_trace(x = vol(w0) * 100, y = ret_conv(w0) * 100, type = "scatter", mode = "markers",
+            name = "Declarada", marker = list(color = "firebrick", size = 12, symbol = "diamond"),
+            hovertemplate = "Declarada<br>vol %{x:.2f}%<br>ret %{y:.2f}%<extra></extra>") |>
+  add_trace(x = vol(wg) * 100, y = ret_conv(wg) * 100, type = "scatter", mode = "markers",
+            name = "Mínima varianza", marker = list(color = "seagreen", size = 12, symbol = "square"),
+            hovertemplate = "Min-var<br>vol %{x:.2f}%<br>ret %{y:.2f}%<extra></extra>") |>
+  layout(xaxis = list(title = "Volatilidad anual (%)"),
+         yaxis = list(title = "Retorno w'mu anual (%)"),
+         title = "Frontera eficiente, emisores individuales y carteras de referencia",
+         hovermode = "closest")
+```
+
 **1.3** Trace la frontera con al menos veinte puntos y superponga los cuatro
 emisores, la cartera declarada y la de mínima varianza. Responda con la gráfica y
 con una frase: ¿alguno de los cuatro emisores, por sí solo, es eficiente?
@@ -161,10 +241,45 @@ rentable, así que ese activo **es** el extremo de la frontera, siempre. Diga cu
 y diga también dónde queda el Banco de Bogotá, que no está a la derecha de la curva
 sino por debajo de donde la curva arranca.
 
+Sí: **ISA**, con **12,88 %** de retorno individual, es exactamente el extremo
+superior de la frontera (el máximo de la curva coincide con `max(mu)` hasta la
+tercera cifra decimal) — es la consecuencia mecánica de la restricción sin
+cortos que advierte el enunciado, no un hallazgo sobre ISA en particular.
+Banco de Bogotá, en cambio, no queda "a la derecha" de la curva: con **33,15 %**
+de volatilidad individual —más alta que el **23,93 %** con el que *arranca* la
+frontera— y solo **0,31 %** de retorno —muy por debajo del 6,32 % del punto de
+mínima varianza—, queda estrictamente dominado: peor en las dos dimensiones a la
+vez que el punto donde la curva empieza, no simplemente ineficiente por estar
+"más a la derecha" a igual retorno.
+
+```{r}
+#| label: parte1-correlacion-optim
+Rmat  <- cor(r)
+wg_cor <- frontera(Sig = Rmat)
+round(rbind(minvar_covarianza = wg * 100, minvar_correlacion = wg_cor * 100), 2)
+round(c(vol_minvar_covarianza = vol(wg) * 100,
+        vol_minvar_correlacion_evaluada_con_S = vol(wg_cor) * 100), 2)
+```
+
 **1.4** Repita 1.1 usando la **matriz de correlación** en lugar de la de
 covarianzas, como hace la IA en el R3 de la sección 2 del capítulo. Reporte los
 pesos que salen y explique, con las volatilidades del panel en la mano, por qué se
 mueven en la dirección en que se mueven.
+
+Con la matriz de correlación los pesos quedan **23,32 · 27,98 · 24,99 · 23,71**
+—mucho más parejos que el **20,76 · 38,13 · 15,97 · 25,14** de la covarianza—, y
+la dirección del cambio es exactamente la que predice el recuadro de advertencia:
+optimizar con correlación equivale a suponerle a los cuatro emisores la misma
+volatilidad, borrando la información de la tabla de volatilidades individuales
+(38,65 · 33,15 · 42,57 · 36,60 %). Banco de Bogotá es, de lejos, el de menor
+volatilidad real (33,15 %), y por eso la covarianza lo premia con **38,13 %** de
+peso; la correlación no puede "ver" esa ventaja y lo deja en **27,98 %**. Grupo
+Sura es el de mayor volatilidad real (42,57 %), y por eso la covarianza lo
+castiga a **15,97 %**; sin esa información, la correlación casi lo duplica a
+**24,99 %**. El resultado, evaluado con la covarianza real, no es gratis: esa
+cartera "de correlación" tiene **24,39 %** de volatilidad efectiva contra
+**23,93 %** de la verdadera mínima varianza —0,46 pp más de riesgo por haber
+optimizado con la matriz equivocada.
 
 ---
 
@@ -172,8 +287,7 @@ mueven en la dirección en que se mueven.
 
 ```{r}
 #| label: parte2-asignacion
-#| eval: false
-documento <- "1000123456"        # <- ponga el suyo, sin puntos ni guiones
+documento <- "74374566"        # cedula de Edwing Navarrete, sin puntos ni guiones
 
 d1 <- as.integer(substr(documento, nchar(documento), nchar(documento)))
 d2 <- as.integer(substr(documento, nchar(documento) - 1, nchar(documento) - 1))
@@ -182,14 +296,89 @@ tope    <- c(0.25, 0.30, 0.35, 0.40)[(d2 %% 4) + 1]  # máximo por emisor
 c(ventana = ventana, tope = tope)
 ```
 
+Con este documento: `ventana = 750` ruedas más recientes, `tope = 35 %` por emisor.
+
+```{r}
+#| label: parte2-mv
+# Reestimar mu y Sigma solo con la ventana propia (las ultimas `ventana` ruedas)
+r2  <- tail(r, ventana)
+mu2 <- colMeans(r2) * 252
+S2  <- cov(r2) * 252
+ret_conv2 <- function(w) sum(w * mu2)
+ret_real2 <- function(w) mean(log(1 + (exp(r2) - 1) %*% w)) * 252
+
+# Generaliza frontera() de la parte 1: agrega un tope superior por emisor.
+# Con tope = 1 el problema es identico al de la parte 1 (w<=1 nunca ata si
+# sum(w)=1 y w>=0), asi que sirve tambien para el caso "sin tope" de la 2.2.
+frontera_tope <- function(tope, Sig, med, objetivo = NULL) {
+  n <- length(med)
+  A <- cbind(rep(1, n), diag(n), -diag(n))
+  b <- c(1, rep(0, n), rep(-tope, n))
+  meq <- 1
+  if (!is.null(objetivo)) {
+    A <- cbind(A[, 1], med, A[, -1]); b <- c(1, objetivo, b[-1]); meq <- 2
+  }
+  pmax(solve.QP(2 * Sig, rep(0, n), A, b, meq = meq)$solution, 0)
+}
+
+w_propia  <- frontera_tope(tope, S2, mu2)   # minima varianza, ventana + tope propios
+w_sintope <- frontera_tope(1,    S2, mu2)   # mismo problema, sin tope (2.2)
+
+round(rbind(
+  ventana_propia   = c(w_propia  * 100, conv = ret_conv2(w_propia)  * 100,
+                       real = ret_real2(w_propia)  * 100, vol = vol(w_propia, S2)  * 100),
+  ventana_sin_tope = c(w_sintope * 100, conv = ret_conv2(w_sintope) * 100,
+                       real = ret_real2(w_sintope) * 100, vol = vol(w_sintope, S2) * 100),
+  panel_completo   = c(wg * 100, conv = ret_conv(wg) * 100,
+                       real = ret_real(wg) * 100, vol = vol(wg) * 100)
+), 2)
+```
+
+```{r}
+#| label: parte2-diferencia
+diff_vs_panel <- (w_propia - wg) * 100
+round(diff_vs_panel, 2)
+round(c(diferencia_mayor_pp = max(abs(diff_vs_panel)),
+        diferencia_mayor_millones = max(abs(diff_vs_panel)) / 100 * W), 1)
+any(w_sintope > tope + 1e-6)   # TRUE = el tope ata
+```
+
 **2.1** Estime μ y Σ **solo con su ventana** —las `ventana` ruedas más recientes—
 y resuelva la mínima varianza con su tope. Reporte los pesos, la volatilidad y el
 retorno, y póngalos al lado de los del panel completo. Diga cuál es la diferencia
 mayor, en puntos porcentuales y en millones.
 
+Con la ventana propia (750 ruedas, tope 35 %) la mínima varianza queda
+**22,65 · 35,00 · 15,59 · 26,76**, con volatilidad **22,69 %** y retorno `w′μ`
+**16,08 %** (real 19,98 %) — muy distinta de la del panel completo
+(20,76 · 38,13 · 15,97 · 25,14, vol 23,93 %, `w′μ` 6,32 %). La diferencia mayor es
+en **Banco de Bogotá: 3,13 pp**, equivalentes a **25 020 millones** sobre el
+fondo. El retorno `w′μ` casi se triplica frente al panel completo, pero eso es
+enteramente el reflejo de que las últimas 750 ruedas tuvieron retornos medios
+excepcionalmente altos — no una mejora estructural del activo, que es justo el
+tipo de artefacto de ventana que la parte 4 va a medir con números.
+
 **2.2** ¿Su tope **ata**? Resuelva el mismo problema sin tope y compare. Si no
 ata, dígalo con las dos soluciones puestas: una restricción inactiva no cuesta
 nada, y demostrarlo es parte de la respuesta.
+
+Sí ata, pero por un margen mínimo: sin tope, Banco de Bogotá sale en
+**35,13 %**; con el tope del 35 % puesto, queda fijado exactamente en **35,00 %**.
+El resto de los pesos casi no se mueve (22,60→22,65, 15,54→15,59, 26,72→26,76).
+El tope corta apenas 0,13 pp de una sola posición — ata, en el sentido estricto
+de que la restricción está activa, pero no está lejos de no atar en absoluto.
+
+```{r}
+#| label: parte2-costotope
+rf <- log(1.07)   # tasa libre de riesgo, log(1.07); se declara formalmente en la parte 3
+sharpe2 <- function(w) (ret_conv2(w) - rf) / vol(w, S2)
+
+round(c(vol_sin_tope    = vol(w_sintope, S2) * 100,
+        vol_con_tope    = vol(w_propia,  S2) * 100,
+        costo_vol_pp    = (vol(w_propia, S2) - vol(w_sintope, S2)) * 100,
+        sharpe_sin_tope = sharpe2(w_sintope),
+        sharpe_con_tope = sharpe2(w_propia)), 4)
+```
 
 **2.3** Con su ventana, mida el **costo de su tope** en las dos monedas: cuánta
 volatilidad añade a la cartera de mínima varianza y cuánto le mueve la razón de
@@ -197,10 +386,83 @@ Sharpe. En el panel completo, el tope del 30 % añade 0,19 pp de volatilidad y
 **sube** el Sharpe de −0,0188 a 0,0136. Explique en dos líneas cómo puede ser que
 una restricción mejore una medida y empeore la otra.
 
+Con mi ventana y mi tope (35 %) el costo es prácticamente nulo: la volatilidad
+no se mueve en la cuarta cifra decimal (22,6946 % con y sin tope) y el Sharpe
+(`w′μ`, con rf = 6,7659 %) cae de **0,4107 sin tope** a **0,4104 con tope** — apenas
+0,0003. Esto **no** contradice el ejemplo del panel completo: allí el tope del
+30 % sí recorta una posición grande (Grupo Sura queda forzado lejos de su óptimo
+sin restricción) y por eso sube la volatilidad *y* el Sharpe a la vez —una
+restricción puede mover las dos medidas en la misma dirección si obliga a salir
+de una concentración que aumentaba varianza sin compensar en retorno—. En mi
+caso el óptimo sin restricción ya casi respetaba mi tope, así que la restricción
+ata mas no duele: no hay margen para que mueva ni la volatilidad ni el Sharpe de
+forma apreciable.
+
+```{r}
+#| label: parte2-frontera
+# Rango de retorno alcanzable con el tope puesto: no es [min(mu2), max(mu2)],
+# porque ningun activo puede pesar mas que `tope`. Se calcula concentrando el
+# tope en los activos de mayor/menor retorno hasta completar el 100%.
+rango_factible <- function(medias, tope) {
+  omax <- order(medias, decreasing = TRUE); wmax <- rep(0, 4); rem <- 1
+  for (i in omax) { take <- min(tope, rem); wmax[i] <- take; rem <- rem - take }
+  omin <- order(medias); wmin <- rep(0, 4); rem <- 1
+  for (i in omin) { take <- min(tope, rem); wmin[i] <- take; rem <- rem - take }
+  c(sum(wmin * medias), sum(wmax * medias))
+}
+
+rf_propia <- rango_factible(mu2, tope)
+retornos_propia <- seq(rf_propia[1] + 1e-6, rf_propia[2] - 1e-6, length.out = 30)
+frontera_propia <- t(sapply(retornos_propia, function(m) {
+  w <- frontera_tope(tope, S2, mu2, objetivo = m)
+  c(ret = ret_conv2(w), vol = vol(w, S2))
+}))
+
+retornos_panel <- seq(min(mu) + 1e-6, max(mu) - 1e-6, length.out = 30)
+frontera_panel <- t(sapply(retornos_panel, function(m) {
+  w <- frontera(m)
+  c(ret = ret_conv(w), vol = vol(w))
+}))
+
+suppressPackageStartupMessages(library(plotly))
+plot_ly() |>
+  add_trace(x = frontera_panel[, "vol"] * 100, y = frontera_panel[, "ret"] * 100,
+            type = "scatter", mode = "lines", name = "Panel completo (1.917 ruedas)",
+            line = list(color = "steelblue", width = 3),
+            hovertemplate = "Panel completo<br>vol %{x:.2f}%<br>ret %{y:.2f}%<extra></extra>") |>
+  add_trace(x = frontera_propia[, "vol"] * 100, y = frontera_propia[, "ret"] * 100,
+            type = "scatter", mode = "lines",
+            name = paste0("Ventana propia (", ventana, " ruedas, tope ", tope * 100, "%)"),
+            line = list(color = "firebrick", width = 3),
+            hovertemplate = "Ventana propia<br>vol %{x:.2f}%<br>ret %{y:.2f}%<extra></extra>") |>
+  add_trace(x = vol(wg) * 100, y = ret_conv(wg) * 100, type = "scatter", mode = "markers",
+            name = "Min-var panel completo", marker = list(color = "steelblue", size = 12),
+            hovertemplate = "Min-var panel<br>vol %{x:.2f}%<br>ret %{y:.2f}%<extra></extra>") |>
+  add_trace(x = vol(w_propia, S2) * 100, y = ret_conv2(w_propia) * 100, type = "scatter", mode = "markers",
+            name = "Min-var ventana propia", marker = list(color = "firebrick", size = 12),
+            hovertemplate = "Min-var propia<br>vol %{x:.2f}%<br>ret %{y:.2f}%<extra></extra>") |>
+  layout(xaxis = list(title = "Volatilidad anual (%)"),
+         yaxis = list(title = "Retorno w'mu anual (%)"),
+         title = "Frontera eficiente: ventana propia vs panel completo",
+         hovermode = "closest")
+```
+
 **2.4** Trace su frontera y la del panel completo en el mismo par de ejes.
 Responda: si el comité hubiera aprobado su ventana en vez de las 1 916 ruedas,
 ¿qué le habría recomendado usted al fondo, y en cuántos puntos porcentuales
 difiere de lo que recomienda el capítulo?
+
+Las dos curvas casi no se tocan: la frontera de mi ventana vive en una franja de
+volatilidad muy parecida (22,7 %–25,9 % contra 23,9 %–36,6 % del panel completo)
+pero a un nivel de retorno `w′μ` muchísimo más alto (12,6 %–17,9 % contra
+0,3 %–12,9 %). Si el comité hubiera aprobado mi ventana de 750 ruedas en vez del
+panel completo, le habría recomendado la misma familia de cartera de mínima
+varianza pero con un retorno esperado **cerca de 10 puntos porcentuales mayor**
+(16,08 % contra 6,32 % en `w′μ`) al mismo nivel de riesgo aproximado —una
+recomendación que se ve mucho mejor en el papel y que es enteramente producto de
+haber cortado el panel justo donde el mercado venía subiendo. Es la advertencia
+de la parte 1.2 de este taller repetida con otro nombre: la ventana que se elige
+determina la conclusión, y por eso se declara *antes* de mirar los pesos.
 
 ---
 
