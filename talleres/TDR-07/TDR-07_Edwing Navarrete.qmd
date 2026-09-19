@@ -102,6 +102,7 @@ w0 <- c(0.30, 0.20, 0.25, 0.25)          # la decisión declarada del curso (D-A
 W  <- 800000                             # millones de pesos
 
 r  <- diff(log(as.matrix(precios[, acciones])))
+fechas_r <- precios$fecha[-1]     # fecha de cada retorno (r tiene una fila menos que precios)
 mu <- colMeans(r) * 252
 S  <- cov(r) * 252
 
@@ -713,9 +714,65 @@ El capítulo mide que la frontera se mueve. Esta parte mide qué pasa si uno int
 seguirla, que es la pregunta que ningún libro de texto responde y todo comité
 pregunta.
 
+```{r}
+#| label: parte4-rolling
+# Reestimacion rodante: ventana de 250 ruedas, rebalanceo cada 21, sobre las
+# ultimas 1000 ruedas del panel. frontera() de la parte 1 sirve tal cual: cada
+# ventana sigue siendo un problema de 4 activos.
+ventana_roll <- 250
+paso_roll    <- 21
+n            <- nrow(r)
+idx_rebal    <- seq(n - 999, n, by = paso_roll)
+
+pesos_roll <- t(sapply(idx_rebal, function(i) {
+  win  <- r[(i - ventana_roll + 1):i, ]
+  frontera(Sig = cov(win) * 252, med = colMeans(win) * 252)
+}))
+colnames(pesos_roll) <- acciones
+fechas_rebal <- as.Date(precios$fecha[-1][idx_rebal])
+
+cat("Numero de puntos de rebalanceo:", length(idx_rebal), "\n")
+round(head(pesos_roll) * 100, 2)
+```
+
+```{r}
+#| label: parte4-rolling-grafico
+suppressPackageStartupMessages(library(plotly))
+acum <- t(apply(pesos_roll, 1, cumsum)) * 100  # para el area apilada
+
+plot_ly() |>
+  add_trace(x = fechas_rebal, y = acum[, 1], type = "scatter", mode = "lines",
+            name = acciones[1], fill = "tozeroy", line = list(width = 0.5),
+            hovertemplate = paste0(acciones[1], ": %{text:.1f}%<extra></extra>"), text = pesos_roll[,1]*100) |>
+  add_trace(x = fechas_rebal, y = acum[, 2], type = "scatter", mode = "lines",
+            name = acciones[2], fill = "tonexty", line = list(width = 0.5),
+            hovertemplate = paste0(acciones[2], ": %{text:.1f}%<extra></extra>"), text = pesos_roll[,2]*100) |>
+  add_trace(x = fechas_rebal, y = acum[, 3], type = "scatter", mode = "lines",
+            name = acciones[3], fill = "tonexty", line = list(width = 0.5),
+            hovertemplate = paste0(acciones[3], ": %{text:.1f}%<extra></extra>"), text = pesos_roll[,3]*100) |>
+  add_trace(x = fechas_rebal, y = acum[, 4], type = "scatter", mode = "lines",
+            name = acciones[4], fill = "tonexty", line = list(width = 0.5),
+            hovertemplate = paste0(acciones[4], ": %{text:.1f}%<extra></extra>"), text = pesos_roll[,4]*100) |>
+  layout(xaxis = list(title = "Fecha de rebalanceo"), yaxis = list(title = "Peso acumulado (%)"),
+         title = "Mínima varianza reestimada cada 21 ruedas (ventana 250)",
+         hovermode = "x unified")
+```
+
 **4.1** Con ventana de 250 ruedas, reestime la cartera de mínima varianza **cada
 21 ruedas** sobre las últimas 1 000 y guarde la serie de pesos. Grafíquela como
 área apilada.
+
+```{r}
+#| label: parte4-turnover
+turnovers <- sapply(2:nrow(pesos_roll), function(k) {
+  0.5 * sum(abs(pesos_roll[k, ] - pesos_roll[k - 1, ]))
+})
+turnover_anual <- mean(turnovers) * (252 / paso_roll)
+
+round(c(turnover_promedio_pct = mean(turnovers) * 100,
+        turnover_maximo_pct   = max(turnovers) * 100,
+        turnover_anualizado_pct = turnover_anual * 100), 2)
+```
 
 **4.2** Calcule el ***turnover*** (rotación) de cada rebalanceo —la mitad de la
 suma de los cambios absolutos de peso— y anualícelo. El orden de magnitud que sale
@@ -724,19 +781,125 @@ con esa ventana y esa periodicidad es un turnover anual de entre el 55 % y el
 su cifra exacta depende del calendario de rebalanceo que usted declaró en la parte
 1, así que repórtela con ese calendario a la vista.
 
+Con el calendario declarado en la parte 1 (panel completo, sin periodicidad de
+reestimación fija hasta ahora; aquí cada 21 ruedas): turnover promedio por
+rebalanceo **4,76 %**, turnover anualizado **57,14 %** —dentro del rango
+55-60 % que anticipa el enunciado—, y el rebalanceo más grande mueve por sí
+solo **31,08 %** de la cartera, superando el 30 % anunciado.
+
+```{r}
+#| label: parte4-costo
+costo_bps    <- 0.0020
+años_periodo <- 1000 / 252
+costo_anual_millones <- sum(turnovers * costo_bps * W) / años_periodo
+
+round(c(costo_anual_millones = costo_anual_millones,
+        brecha_retorno_millones_1.2 = brecha_retorno_millones,
+        sobra_millones = brecha_retorno_millones - costo_anual_millones), 1)
+```
+
 **4.3** A un costo de transacción de **20 puntos básicos** sobre lo que se mueve,
 convierta ese turnover en millones al año sobre los 800 000 del fondo. Compárelo con
 lo que la frontera prometía en 1.2, que **ya no son los 0,74 pp**: medidos sin la
 convención son **0,47 pp**, y compuestos sobre el fondo, **4 232 millones** al año.
 Responda con las dos cifras juntas: ¿sobrevive la ganancia al costo de perseguirla?
 
+Con 20 pb sobre lo que se mueve, perseguir la frontera cuesta **≈902 millones**
+al año; lo que la frontera prometía en 1.2 son **4 242 millones** al año (los
+0,47 pp compuestos). La ganancia **sí sobrevive** al costo, y con margen amplio:
+el costo se lleva menos de una cuarta parte de la promesa (902 / 4.242 ≈ 21 %).
+
 Y añada una línea sobre de qué lado está el sesgo de esa comparación: los 0,47 pp
 están medidos sobre la misma muestra con la que se estimó la frontera, y el costo de
 rebalanceo no.
 
+El sesgo favorece a la frontera: los 4.242 millones se calculan con μ y Σ
+estimados sobre **todo** el panel, incluido el propio período que se está
+"prometiendo" batir —es una comparación dentro de muestra, optimista por
+construcción—, mientras que los 902 millones de costo salen de una simulación
+de reestimación **fuera de muestra**, rueda a rueda, sin mirar al futuro en
+ningún punto. Que la ganancia sobreviva incluso con esa comparación sesgada a su
+favor es una señal razonablemente sólida, pero el margen de 4,7× no debe leerse
+como una garantía: la Parte 2 ya mostró cuánto se mueve μ entre ventanas.
+
+```{r}
+#| label: parte4-largo
+ventana_larga <- 1000
+paso_larga    <- 126  # semestral
+idx_rebal_larga <- seq(ventana_larga, n, by = paso_larga)
+
+pesos_roll_larga <- t(sapply(idx_rebal_larga, function(i) {
+  win <- r[(i - ventana_larga + 1):i, ]
+  frontera(Sig = cov(win) * 252, med = colMeans(win) * 252)
+}))
+colnames(pesos_roll_larga) <- acciones
+
+turnovers_larga <- sapply(2:nrow(pesos_roll_larga), function(k) {
+  0.5 * sum(abs(pesos_roll_larga[k, ] - pesos_roll_larga[k - 1, ]))
+})
+turnover_anual_larga <- mean(turnovers_larga) * (252 / paso_larga)
+
+# Que se pierde, en numero: comparar el desempeño REALIZADO fuera de muestra de
+# los dos esquemas sobre el MISMO periodo (desde el primer rebalanceo posible
+# con ventana 1000 hasta el final), no solo el turnover.
+eval_ini <- ventana_larga + 1
+peso_vigente <- function(idx_rebal, pesos, t) pesos[max(which(idx_rebal <= (t - 1))), ]
+
+ret_A <- sapply(eval_ini:n, function(t) sum(r[t, ] * peso_vigente(idx_rebal, pesos_roll, t)))
+ret_B <- sapply(eval_ini:n, function(t) sum(r[t, ] * peso_vigente(idx_rebal_larga, pesos_roll_larga, t)))
+
+round(c(turnover_anual_250_21   = turnover_anual * 100,
+        turnover_anual_1000_126 = turnover_anual_larga * 100), 2)
+round(c(vol_realizada_250_21   = sd(ret_A) * sqrt(252) * 100,
+        vol_realizada_1000_126 = sd(ret_B) * sqrt(252) * 100,
+        ret_realizado_250_21   = mean(ret_A) * 252 * 100,
+        ret_realizado_1000_126 = mean(ret_B) * 252 * 100), 3)
+```
+
 **4.4** Repita 4.1 y 4.2 con ventana de 1 000 ruedas y reestimación semestral.
 Reporte el turnover y diga qué se pierde al alargar la ventana: dé el número, no
 la intuición.
+
+El turnover anualizado cae de **57,14 %** a **10,13 %** —una reducción de
+alrededor del 82 %—. Pero alargar la ventana no es gratis, y el número lo dice
+con precisión: evaluando las dos estrategias fuera de muestra sobre el **mismo**
+período (916 ruedas), la ventana larga entrega un retorno realizado **0,97 pp
+menor al año** (0,44 % contra 1,41 %) con una volatilidad realizada que **no
+mejora** —de hecho sube 0,15 pp (25,54 % contra 25,39 %)—. Lo que se pierde no
+es control de riesgo —ahí la ventana larga no compra nada—, es capacidad de
+reaccionar a qué activo está rindiendo mejor recientemente; se paga en retorno,
+no en volatilidad.
+
+```{r}
+#| label: parte4-defecto1
+idx_out <- which(fechas_r %in% c("2025-02-19", "2025-02-20"))
+r_sin   <- r[-idx_out, ]
+wg_sin  <- frontera(Sig = cov(r_sin) * 252, med = colMeans(r_sin) * 252)
+
+round(rbind(original = c(wg * 100, vol = vol(wg) * 100),
+            sin_par  = c(wg_sin * 100, vol = vol(wg_sin, cov(r_sin) * 252) * 100)), 2)
+round(c(diferencia_pesos_max_pp = max(abs(wg_sin - wg)) * 100,
+        diferencia_vol_pp = (vol(wg_sin, cov(r_sin) * 252) - vol(wg)) * 100), 2)
+```
+
+```{r}
+#| label: parte4-defecto2
+# Retorno "cada quinta rueda": la suma no solapada de bloques de 5 retornos
+# diarios (no un muestreo salteado que descarta 4 de cada 5 dias).
+retorno_bloques <- function(ret, fase, bloque = 5) {
+  n_ <- nrow(ret)
+  idx <- seq(fase, n_ - bloque + 1, by = bloque)
+  t(sapply(idx, function(i) colSums(ret[i:(i + bloque - 1), , drop = FALSE])))
+}
+
+r5_fase1  <- retorno_bloques(r, 1)
+cor5      <- cor(r5_fase1)
+mean_cor5 <- mean(cor5[upper.tri(cor5)])
+wg5       <- frontera(Sig = cov(r5_fase1) * (252 / 5), med = colMeans(r5_fase1) * (252 / 5))
+
+round(c(correlacion_media_5ta_rueda = mean_cor5), 4)
+round(rbind(original = wg * 100, cada_5ta_rueda = wg5 * 100), 2)
+```
 
 **4.5** Los dos defectos declarados del panel dejan huella distinta sobre esto.
 Quite el par del **19 y 20 de febrero de 2025** y repita 1.1 —los pesos se mueven
@@ -745,6 +908,48 @@ en vez de cada rueda y repita 1.1 otra vez —la correlación media sube de 0,22
 **0,339** y Ecopetrol baja del 20,76 % al **12,79 %**—. Diga cuál de los dos
 defectos le preocuparía más si tuviera que firmar la recomendación, y por qué.
 
+Los dos días de febrero son, con casi total certeza, un error de dato: el 19 de
+febrero los cuatro precios caen simultáneamente entre 9 % y 18 %, y al día
+siguiente casi se revierten por completo —cuatro emisores de sectores distintos
+(petróleo, banco, holding financiero, transmisión eléctrica) no se mueven
+juntos así por una razón de mercado real; es la firma de un glitch del
+proveedor de datos, no de un evento. Quitar el par mueve los pesos **1,92 pp**
+como máximo y la volatilidad **1,14 pp** —en el mismo orden de magnitud que
+anticipa el enunciado (unos 2 pp / 1,27 pp; la pequeña diferencia es normal
+entre versiones exactas del mismo panel—.
+
+Medir cada quinta rueda reproduce **exactamente** las cifras del enunciado:
+correlación media **0,3395** (0,227 → 0,339) y Ecopetrol **12,79 %** (era
+20,76 %, una caída de **7,97 pp** en una sola posición).
+
+**El segundo defecto me preocuparía más si tuviera que firmar.** El primero es
+un error de dato identificable y corregible —una vez se quita, el efecto es
+acotado (2 pp) y no vuelve a aparecer—. El segundo no es un error: es una
+**decisión metodológica arbitraria** (cada cuántas ruedas se mide, y a partir de
+cuál) que mueve una sola posición casi 8 pp sin que haya ningún criterio
+objetivo para preferir esa frecuencia sobre la diaria. Un error de dato se
+encuentra y se cierra; una elección de metodología que cambia la recomendación
+así de fuerte se puede repetir con cualquier otra elección "razonable", y por
+eso es la más peligrosa de firmar sin declarar.
+
+```{r}
+#| label: parte4-fases
+cors_fases <- sapply(1:5, function(f) {
+  rf_ <- retorno_bloques(r, f)
+  cf  <- cor(rf_)
+  mean(cf[upper.tri(cf)])
+})
+names(cors_fases) <- paste0("fase_", 1:5)
+
+fechas_dt    <- as.Date(fechas_r)
+semana       <- format(fechas_dt, "%Y-%U")
+r_semanal    <- t(sapply(split(seq_len(n), semana), function(idxs) colSums(r[idxs, , drop = FALSE])))
+cor_semanal  <- cor(r_semanal)
+mean_cor_sem <- mean(cor_semanal[upper.tri(cor_semanal)])
+
+round(c(cors_fases, semanal_calendario = mean_cor_sem), 4)
+```
+
 **El 0,339 es de una fase, y hay cinco.** Medir «cada quinta rueda» obliga a decidir
 en qué rueda se empieza, y el capítulo empieza en la primera. Repita la medición con
 las otras cuatro: la correlación media sale entre **0,226 y 0,325** —en una de ellas
@@ -752,6 +957,28 @@ no sube nada respecto de la diaria— y por semanas de calendario da 0,273. Repo
 las cinco, diga cuál de los dos resultados de arriba resiste el cambio de fase y
 cuál no, y deje escrita, como regla suya para lo que queda del curso, qué tiene que
 declarar de ahora en adelante quien submuestree una serie.
+
+Las cinco fases dan **0,3395 · 0,3200 · 0,3254 · 0,2263 · 0,3088**. Las otras
+cuatro (excluida la fase 1, ya reportada) caen entre **0,2263 y 0,3254** —el
+rango que anticipa el enunciado—, y la fase 4 (0,2263) prácticamente no sube
+frente a la diaria (0,227). Por semanas de calendario: **0,2724**.
+
+**Ninguno de los dos resultados de arriba resiste completamente el cambio de
+fase, pero por razones distintas.** La conclusión cualitativa —"submuestrear
+sube la correlación media"— sí resiste: las cinco fases y la agregación semanal
+quedan todas por encima o iguales a 0,227, nunca por debajo. Lo que **no**
+resiste es la cifra puntual: 0,339 es el máximo de las cinco fases, no un valor
+típico —la mediana ronda 0,32 y una fase da 0,226, prácticamente sin cambio—.
+Reportar "0,339" sin decir "fase 1 de 5" es elegir, sin decirlo, el resultado
+más favorable a la hipótesis de que hay más correlación de la que la muestra
+diaria revela.
+
+**Regla para lo que queda del curso:** quien submuestree o agregue una serie de
+retornos debe declarar, junto con el resultado, (i) la frecuencia de agregación
+elegida, (ii) la fase o punto de partida usado, y (iii) el rango de resultados
+que se obtiene con las demás fases razonables —no solo el punto que salió—.  Un
+solo número de una serie submuestreada, sin esas tres cosas, no es una cifra
+defendible.
 
 ---
 
