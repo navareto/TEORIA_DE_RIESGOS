@@ -1,0 +1,157 @@
+---
+title: "Guía de sustentación · Taller 7"
+subtitle: "Teoría del Riesgo · Unidad 2 · RA4 — material de apoyo, no hace parte de la entrega"
+author: "EDWING NAVARRETE - 74374566"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-title: "Contenido"
+    embed-resources: true
+    theme: cosmo
+---
+
+::: {.callout-tip appearance="simple"}
+Material de apoyo para defender el Taller 7 en sustentación oral. **No hace
+parte de las respuestas calificadas**: es el resumen de qué defender, con qué
+cifra, y en qué bloque del taller está cada una.
+:::
+
+## La respuesta en treinta segundos
+
+Si solo hay tiempo para una frase: *«La cartera del fondo no está sobre la
+frontera, pero tampoco está mal. Lo que recomiendo es moverla a 30 / 18,74 /
+21,26 / 30, que tiene exactamente el mismo riesgo que hoy —25,02 % de
+volatilidad— y 0,32 puntos más de rentabilidad real, unos 2.846 millones al año,
+por un costo único de 80 millones que se recupera en diez días.»*
+
+Y si preguntan por qué no la mínima varianza, que es lo que todo el mundo
+esperaría: *«Porque medida con retornos reales, la mínima varianza con tope
+rinde un Sharpe de 0,1809 y la cartera que el fondo ya tiene rinde 0,2023.
+Habría sido pedirle al comité renunciar a rentabilidad y a eficiencia al mismo
+tiempo.»*
+
+## Las cifras que hay que tener en la cabeza
+
+| Concepto | Cifra | Dónde está |
+|---|---|---|
+| Cartera declarada | 7,69 % `w′μ` · **11,83 % real** · 25,02 % vol | 1.1 |
+| Mínima varianza | 20,76 · 38,13 · 15,97 · 25,14 · 23,93 % vol | 1.1 |
+| Correlación media del panel | 0,227 | 1.1 |
+| Brecha al mismo riesgo (real) | 0,47 pp = **4.242 millones/año** | 1.2 |
+| Brecha de riesgo | 0,62 pp = 4.960 millones de desviación típica | 1.2 |
+| Único emisor eficiente | ISA, 12,88 % (extremo de la frontera) | 1.3 |
+| Ventana y tope propios | 750 ruedas · tope 35 % | 2 |
+| Tangente sin cortos | 5,52 · 0 · 0 · 94,48 · Sharpe 0,1673 | 3.1 |
+| Sharpe de mínima varianza | **−0,0188 con `w′μ`, +0,1445 real** | 3.2 |
+| Costo de excluir cada emisor | Sura +0,91 < Eco +1,26 < ISA +1,71 < **Bogotá +3,86 pp** | 3.2 |
+| CML a la volatilidad de la declarada | 3,26 pp con `w′μ`, **0,77 pp real = 6.990 millones** | 3.3 |
+| Turnover anual persiguiendo la frontera | 57,14 % · máximo 31,08 % en un solo rebalanceo | 4.2 |
+| Costo de perseguirla | **902 millones/año** contra 4.242 de ganancia | 4.3 |
+| Cartera sin restricciones | −147,15 · 927,45 · 28,04 · −708,34 · Sharpe −0,2891 | 7.1 |
+| **Recomendación** | **30 · 18,74 · 21,26 · 30 · 25,02 % vol · +2.846 millones** | 7.2 |
+| Banda de incertidumbre | 10 %–30 % por emisor = 160.000 millones | 7.2 |
+
+## Las ocho preguntas que probablemente le van a hacer
+
+**1. ¿Por qué `w′μ` no es el retorno de la cartera?**
+Porque los retornos logarítmicos no se suman entre activos, solo a lo largo del
+tiempo. El sesgo vale exactamente el beneficio de diversificación: 4,14 pp para
+la cartera declarada, 0,00 pp para un activo solo. Por eso castiga a las
+carteras repartidas y deja casi intactas a las concentradas.
+
+**2. ¿Por qué el Sharpe de la mínima varianza es negativo?**
+No lo es. Es negativo *en la convención*: con `w′μ` da −0,0188 porque el
+numerador queda por debajo del TES, pero esa cartera rindió 10,22 % de verdad y
+su Sharpe real es **+0,1445**. Lo que sí sobrevive al corregirlo es que sigue
+siendo la peor relación riesgo-retorno de las carteras de referencia.
+
+**3. ¿Por qué no usó la fórmula cerrada de la tangente?**
+Porque su denominador, `1′Σ⁻¹(μ−rf)`, vale **−0,0784** en este panel. Al dividir
+por un negativo se invierten todos los signos y la fórmula devuelve la cartera
+que *minimiza* el Sharpe. Usé programación cuadrática con `w ≥ 0`, que no depende
+del signo de ese denominador.
+
+**4. Y si igual la usara, ¿qué pasaría?**
+Pediría 927 % en Bogotá y −708 % en ISA: apalancamiento bruto del **1.811 %**.
+En 3 de las 1.916 ruedas del panel esa cartera pierde más del 100 % del capital
+—la peor, −241,7 % el 31 de marzo de 2022—. No es agresiva: liquida el fondo tres
+veces en ocho años.
+
+**5. ¿Cómo sabe que el 19 y 20 de febrero de 2025 es un error de dato y no un
+evento de mercado?**
+Porque los cuatro emisores caen entre 9 % y 18 % **el mismo día** y se revierten
+casi por completo al siguiente. Un banco, una petrolera, un holding financiero y
+una transmisora eléctrica no se mueven juntas así por una razón real; esa
+sincronía con reversión inmediata es firma de dato malo, no de mercado.
+
+**6. Si la frontera promete 4.242 millones y perseguirla cuesta 902, ¿por qué no
+la perseguimos sin más?**
+Porque las dos cifras no están medidas con la misma vara. Los 4.242 salen de
+estimar μ y Σ sobre **todo** el panel, incluido el período que se pretende batir
+—es una promesa dentro de muestra—; los 902 salen de reestimar rueda a rueda sin
+mirar al futuro. El sesgo favorece a la frontera, así que 4,7× de margen no es
+garantía de nada.
+
+**7. ¿Por qué su tope del 35 % casi no cuesta y el del 30 % del capítulo sí?**
+Porque en mi ventana el óptimo sin restricción ya dejaba a Bogotá en 35,13 %: el
+tope recorta 0,13 pp y por eso no mueve ni la volatilidad ni el Sharpe. El del
+30 % sobre el panel completo recorta una posición mucho más grande. La
+restricción ata en los dos casos; solo en uno duele.
+
+**8. ¿Qué pasa si cambio la ventana?**
+Ahí está lo importante del trabajo. Con ventana de 125 ruedas, el peso de Bogotá
+va del **17,22 % al 77,50 %** según dónde se corte el panel —72 cortes
+distintos, mismo método, mismos datos—. Por eso la recomendación no es un punto
+que se defiende al decimal, sino un punto que se gobierna con bandas de
+no-acción de ±5 pp y revisión semestral con fecha declarada de antemano.
+
+## Los cuatro puntos donde el trabajo se defiende solo
+
+1. **El hallazgo que cambió la recomendación.** Comparar las candidatas con
+   retornos reales —y no con la convención— mostró que la mínima varianza es
+   peor que la cartera que el fondo ya tiene. La respuesta de libro estaba
+   equivocada, y el documento lo demuestra con la columna exacta al lado.
+2. **El `NaN` que resultó ser el argumento.** El retorno real de la cartera sin
+   restricciones no se puede calcular porque el patrimonio se vuelve negativo.
+   Eso es más contundente que el Sharpe de −0,2891 para explicar por qué esa fila
+   es un monstruo.
+3. **La verificación cruzada que validó el método.** La función de tangente con
+   tope se probó en el caso del 30 %, para el que el enunciado ya daba la
+   respuesta (Sharpe 0,0714), y la reprodujo exacta sin haber sido ajustada para
+   eso. Ese autochequeo es lo que respalda el 0,1056 de mi propio tope.
+4. **Las cinco fases del submuestreo.** El 0,339 de correlación que el capítulo
+   reporta es el **máximo** de las cinco fases posibles, no un valor típico: las
+   otras cuatro van de 0,226 a 0,325, y una prácticamente no sube frente a la
+   diaria. Reportar 0,339 sin decir «fase 1 de 5» es elegir el resultado más
+   favorable sin declararlo.
+
+## Cómo defender el uso de IA, si lo preguntan
+
+La usé como acelerador de **procesamiento**: correr la optimización cuadrática
+sobre 1.916 ruedas, repetir el mismo cálculo en 48 ventanas rodantes, simular la
+mezcla tangente-TES día a día, barrer 72 cortes de ventana. Trabajo mecánico,
+voluminoso y verificable.
+
+No la usé para decidir qué recomendar ni qué significan los resultados. Tres
+pruebas concretas de eso, todas registradas en la bitácora de la parte 6:
+
+- El bug de `uniroot()` que originó todo el trabajo **lo diagnostiqué yo** y
+  propuse la corrección exacta; la IA solo verificó que diera la cifra esperada.
+- En la parte 7 **rechacé la recomendación que el marco teórico sugería**
+  (mínima varianza) porque los retornos reales decían lo contrario.
+- El aviso de `NaN` en 7.1 **lo perseguí en vez de ignorarlo**, y de ahí salió el
+  argumento del apalancamiento del 1.811 %.
+
+Y la parte 5 —la auditoría— la hice sin ninguna asistencia, como exige el taller:
+la IA solo generó la respuesta que había que auditar, que es lo que el enunciado
+explícitamente permite.
+
+## Si no sabe una respuesta
+
+No improvisar una cifra. El taller tiene todos los bloques etiquetados
+(`parte3-cml`, `parte4-turnover`, `parte7-banda`, …): decir en qué bloque está el
+cálculo y ofrecer verificarlo en el momento es una respuesta mejor que una cifra
+aproximada dicha con seguridad. La tesis central del taller es precisamente esa:
+una cifra sin su procedencia declarada no es defendible.

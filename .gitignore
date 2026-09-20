@@ -1,0 +1,11 @@
+# Archivos auxiliares que Quarto genera al renderizar.
+# Con `embed-resources: true` el HTML final es autocontenido y no necesita
+# esta carpeta, asi que no tiene sentido versionarla (pesa varios MB).
+*_files/
+.quarto/
+
+# Artefactos de R
+.Rhistory
+.RData
+.Rproj.user/
+Rplots.pdf

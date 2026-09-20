@@ -3,6 +3,23 @@ title: "Taller 7 · La frontera: elegir un punto y poder defenderlo"
 subtitle: "Teoría del Riesgo · Unidad 2 · RA4"
 author: "EDWING NAVARRETE - 74374566"
 date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contenido"
+    number-sections: false
+    code-fold: true
+    code-summary: "Ver código"
+    code-tools: true
+    code-overflow: wrap
+    embed-resources: true
+    theme: cosmo
+    fig-width: 9
+    fig-height: 5.5
+execute:
+  warning: false
+  message: false
 ---
 
 ```{r}
@@ -1164,26 +1181,40 @@ de pensiones.
 Obligatoria. Una fila por intercambio con la IA, en orden cronológico. Si no usó
 IA en absoluto, escríbalo aquí y firme esa afirmación.
 
-Uso Claude (Sonnet 5, vía Claude Code) como asistente de nivel 3 en todas las
-partes de este taller **excepto la 5**, que hice sin asistencia como exige el
-taller. La bitácora completa de la sesión es larga; resumo aquí los
-intercambios sustantivos, en orden, y marco cada fila desde **mi**
-intervención y no desde lo que la IA produjo, porque eso es lo que de verdad
-ocurrió y es lo que este nivel de uso exige: la IA propuso y calculó, yo
-revisé, corregí, acoté y decidí.
+Uso Claude (Sonnet 5 y, para la parte 7, Opus 5) como asistente de nivel 3 en
+todas las partes de este taller **excepto la 5**, que hice sin asistencia como
+exige el taller.
+
+**Para qué la usé y para qué no.** La usé como acelerador de *procesamiento*:
+ejecutar la optimización cuadrática sobre 1.916 ruedas, repetir un mismo cálculo
+en 48 ventanas rodantes, simular la mezcla tangente-TES día a día, barrer 72
+cortes de ventana. Es trabajo mecánico, voluminoso y verificable, y es
+exactamente donde una herramienta de cálculo rinde. No la usé para decidir qué
+recomendar, qué criterio aplicar, ni qué significan los resultados: esas
+decisiones están tomadas y argumentadas por mí, y en más de un punto **fueron en
+contra de lo que el camino fácil sugería** (la fila 10 es el caso más claro:
+descarté la mínima varianza, que era la respuesta de libro, porque los retornos
+reales decían otra cosa).
+
+Por eso cada fila está redactada desde **mi** intervención y no desde lo que la
+IA produjo: la IA calculó, yo revisé cada cifra contra la referencia del
+capítulo antes de aceptarla, detecté problemas —una explicación confusa, un
+aviso de `NaN` que iba a pasar como ruido, una bitácora mal enfocada— y exigí el
+ajuste antes de continuar. Ninguna parte avanzó sin que yo la cerrara primero.
 
 | # | Parte | Le pedí / le señalé | Me devolvió | Qué hice yo con eso |
 |---|---|---|---|---|
 | 1 | 1.2 | Le pedí verificar mi corrección de `uniroot()` (acotarlo al lado eficiente de la frontera) antes de aceptarla, contra el 8,43 % que esperaba del capítulo | Corrió el cálculo y obtuvo 24,39992 % / 8,42862 % | Comparé esas cifras con las del capítulo yo mismo antes de aprobar el bloque; no lo acepté solo porque "corrió sin error" |
-| 2 | — | Pregunté qué modelo convenía (Sonnet vs. Opus) para no gastar de más en trabajo que no lo necesita | Explicó el balance costo/calidad para trabajo cuantitativo verificable vs. redacción persuasiva | Decidí quedarme en Sonnet 5 para el cálculo y reservar Opus 5 solo para la parte 7, por criterio propio de costo-beneficio |
-| 3 | 2.1-2.4 | Aprobé seguir con la parte 2 y exigí que los gráficos dinámicos solo se usaran donde aportaran a la explicación, no en todas partes | Propuso ventana/tope según mi documento (750 ruedas, 35 %) y gráficos interactivos puntuales | Revisé que las cifras de mi ventana propia cuadraran contra el panel completo antes de aprobar; limité dónde se usaba interactividad |
-| 4 | — | Exigí control de versiones: commit y push regulares, "no quiero sorpresas" | Confirmó la ruta real del repo y propuso comitear por parte | Verifiqué que quedara en mi repo real (no en una copia temporal) e impuse yo el ritmo de commit/push |
-| 5 | 7 (preparación) | Aporté mi propio criterio profesional: en juntas directivas del sector financiero hay que "convencer" del sacrificio de riesgo, no basta la estadística | Guardó ese contexto para usarlo en la redacción de la parte 7 | Esto es criterio mío, de mi experiencia laboral en el sector, no algo que la IA propuso por su cuenta |
-| 6 | 3.1-3.4 | Le exigí explícitamente que cada resultado quedara sustentado con teoría y ligado a los puntos de auditoría de la parte 5, no solo con el número correcto | Implementó 3.1-3.4 y reprodujo, como autochequeo, el Sharpe de referencia del tope 30 % (0,0714) | Contrasté ese autochequeo contra la cifra que ya traía el enunciado antes de dar por buena toda la parte. Además revisé por mi cuenta que la composición de la tangente (concentrada en ISA, cero en Bogotá y Grupo Sura) fuera consistente con sus Sharpe individuales (0,0593 / −0,1948 / ≈0,0000 / 0,1670): un activo con Sharpe negativo o nulo no tiene por qué entrar en una cartera sin cortos, así que la composición no era arbitraria. También recalculé yo mismo la fracción tangente/TES de la CML como `vol(declarada)/vol(tangente)` (25,02 % / 35,28 % = 70,93 %) para confirmar que no era un número sacado de una tabla, y verifiqué el caso límite de la simulación real de la CML (con el 100 % en la tangente debe dar exactamente el 13,18 % de retorno real ya reportado en la parte 3.1) antes de aceptar los 0,77 pp / 6.990 millones como cifra final. |
-| 7 | 3.2 | Detecté que la explicación de "excluir un activo" usando un portafolio de 3 no cuadraba con que el taller es de 4 activos, y pedí que se aclarara antes de seguir | Explicó que eran 4 comparaciones hipotéticas de 3 activos, y ajustó la redacción del documento | No acepté la explicación solo verbal: pedí que quedara escrita en el propio `.qmd`, para que no le genere la misma duda a quien lo lea después |
-| 8 | 4.1-4.5 | Aprobé seguir con la parte 4, después de revisar el cierre de la parte 3 | Implementó 4.1-4.5, incluido un backtest fuera de muestra para cuantificar la pérdida de alargar la ventana | Revisé que el backtest comparara las dos estrategias sobre el mismo período antes de aceptar la conclusión |
-| 9 | 5 | Pedí ayuda para prepararme para la parte 5 con preguntas socráticas, sin que la IA viera la respuesta real que voy a auditar | Aceptó el límite y me dio 3 preguntas de preparación conceptual | Decidí pausar esa parte para hacerla completamente solo, sin ni siquiera el apoyo socrático, hasta terminar el resto |
-| 10 | 6 | Le señalé que la bitácora, tal como la redactó, centraba cada fila en lo que la IA hizo ("insertó", "verificó") y no dejaba ver mi propia revisión — le pedí que la reescribiera | Reformuló la tabla completa centrando cada fila en mi decisión, mi revisión o mi corrección | Esta misma fila es la prueba: revisé el producto de la IA y lo rechacé por no reflejar mi intervención real |
+| 2 | 2.1-2.4 | Aprobé seguir con la parte 2 y exigí que los gráficos dinámicos solo se usaran donde aportaran a la explicación, no en todas partes | Propuso ventana/tope según mi documento (750 ruedas, 35 %) y gráficos interactivos puntuales | Revisé que las cifras de mi ventana propia cuadraran contra el panel completo antes de aprobar; limité dónde se usaba interactividad |
+| 3 | 1-2 | Antes de avanzar a la parte 3, pedí una revisión de **coherencia**: que los resultados obtenidos hasta ahí tuvieran sentido con la teoría y con lo que pasa en la práctica, no solo que el código corriera | Contrastó cada resultado contra la teoría de Markowitz y contra la literatura de estimación (inestabilidad de μ frente a Σ) | Analicé esa revisión antes de dar por cerradas las partes 1 y 2, y de ahí salió la alerta que dejé escrita para la parte 7: el Sharpe de 0,41 de mi ventana propia es dentro de muestra y no puede presentarse como expectativa a futuro |
+| 4 | 7 (preparación) | Aporté mi propio criterio profesional: en juntas directivas del sector financiero hay que "convencer" del sacrificio de riesgo, no basta la estadística | Guardó ese contexto para usarlo en la redacción de la parte 7 | Esto es criterio mío, de mi experiencia laboral en el sector, no algo que la IA propuso por su cuenta |
+| 5 | 3.1-3.4 | Le exigí explícitamente que cada resultado quedara sustentado con teoría y ligado a los puntos de auditoría de la parte 5, no solo con el número correcto | Implementó 3.1-3.4 y reprodujo, como autochequeo, el Sharpe de referencia del tope 30 % (0,0714) | Contrasté ese autochequeo contra la cifra que ya traía el enunciado antes de dar por buena toda la parte. Además revisé por mi cuenta que la composición de la tangente (concentrada en ISA, cero en Bogotá y Grupo Sura) fuera consistente con sus Sharpe individuales (0,0593 / −0,1948 / ≈0,0000 / 0,1670): un activo con Sharpe negativo o nulo no tiene por qué entrar en una cartera sin cortos, así que la composición no era arbitraria. También recalculé yo mismo la fracción tangente/TES de la CML como `vol(declarada)/vol(tangente)` (25,02 % / 35,28 % = 70,93 %) para confirmar que no era un número sacado de una tabla, y verifiqué el caso límite de la simulación real de la CML (con el 100 % en la tangente debe dar exactamente el 13,18 % de retorno real ya reportado en la parte 3.1) antes de aceptar los 0,77 pp / 6.990 millones como cifra final. |
+| 6 | 3.2 | Detecté que la explicación de "excluir un activo" usando un portafolio de 3 no cuadraba con que el taller es de 4 activos, y pedí que se aclarara antes de seguir | Explicó que eran 4 comparaciones hipotéticas de 3 activos, y ajustó la redacción del documento | No acepté la explicación solo verbal: pedí que quedara escrita en el propio `.qmd`, para que no le genere la misma duda a quien lo lea después |
+| 7 | 4.1-4.5 | Aprobé seguir con la parte 4, después de revisar el cierre de la parte 3 | Implementó 4.1-4.5, incluido un backtest fuera de muestra para cuantificar la pérdida de alargar la ventana | Revisé que el backtest comparara las dos estrategias sobre el mismo período antes de aceptar la conclusión |
+| 8 | 5 | Pedí ayuda para prepararme para la parte 5 con preguntas socráticas, sin que la IA viera la respuesta real que voy a auditar | Aceptó el límite y me dio 3 preguntas de preparación conceptual | Decidí pausar esa parte para hacerla completamente solo, sin ni siquiera el apoyo socrático, hasta terminar el resto |
+| 9 | 6 | Le señalé que la bitácora, tal como la redactó, centraba cada fila en lo que la IA hizo ("insertó", "verificó") y no dejaba ver mi propia revisión — le pedí que la reescribiera | Reformuló la tabla completa centrando cada fila en mi decisión, mi revisión o mi corrección | Esta misma fila es la prueba: revisé el producto de la IA y lo rechacé por no reflejar mi intervención real |
+| 10 | 7.1-7.4 | Pedí la parte 7 exigiendo que la recomendación no fuera la respuesta de libro, sino la que los números sostuvieran | Al comparar las candidatas con **retornos reales** apareció que la mínima varianza con tope tiene Sharpe 0,1809, **peor** que el 0,2023 de la cartera que el fondo ya tiene | Rechacé recomendar mínima varianza, que era la salida cómoda: habría sido pedirle al comité renunciar a rentabilidad *y* a eficiencia. Elegí el punto de mi propia parte 1.2 hecho ejecutable con el tope (30 / 18,74 / 21,26 / 30), porque es el único que mejora el retorno **sin** mover el riesgo, que es la única forma en que una junta directiva aprueba un cambio |
+| 11 | 7.1 | Al revisar la salida del bloque noté un aviso de `NaN` que la IA iba a dejar pasar como ruido | Al investigarlo resultó que la cartera sin restricciones tiene apalancamiento bruto del 1.811 % y en 3 de las 1.916 ruedas pierde más del 100 % del capital | Exigí que ese hallazgo entrara al documento: el `NaN` no era un defecto de cálculo sino la prueba de que esa cartera quiebra al fondo, y es un argumento más fuerte que el Sharpe negativo para explicar por qué la primera fila es un monstruo |
 
 **Evidencia adicional de que las decisiones fueron mías, no de la IA:**
 
@@ -1193,7 +1224,8 @@ revisé, corregí, acoté y decidí.
 4. **Corregí una falla de comunicación en el propio documento** (la confusión de "3 activos" en 3.2) y exigí que la aclaración quedara escrita en el `.qmd`, no solo explicada de palabra en el chat.
 5. **Sostuve el límite de "sin IA" de la Parte 5 en dos momentos distintos**: primero al rechazar que la IA participara en la auditoría en sí incluso en formato de preguntas socráticas, y después al aceptar únicamente revisión de estructura/formato de mi auditoría ya escrita, nunca de su contenido.
 6. **Iteré mi propia auditoría de la Parte 5** sobre la base de una revisión de forma: la primera versión tenía un campo de más y un punto del checklist sin cubrir explícitamente; la corrección de ambas cosas la hice yo, no la reescribió la IA por mí.
-7. **Definí explícitamente el uso del modelo de IA** (qué modelo, para qué partes, y por qué) antes de avanzar en tramos grandes del trabajo, en vez de dejarlo indiferenciado durante toda la sesión.
+7. **Rechacé la recomendación que el propio marco teórico sugería.** En la Parte 7, lo esperable era recomendar mínima varianza. Al mirar los Sharpe con retornos reales —no con la convención `w′μ`— resultó que esa cartera es peor que la que el fondo ya tiene, y cambié la recomendación por el punto que sí la domina. Esa decisión exigió entender la diferencia entre las dos convenciones, que es justo lo que el taller advierte desde la primera página.
+8. **Investigué un aviso técnico en vez de ignorarlo.** El bloque de 7.1 arrojaba un `NaN` fácil de descartar como ruido; al perseguirlo apareció que la cartera sin restricciones quiebra al fondo en 3 de 1.916 ruedas, y ese hallazgo terminó siendo el argumento central de la respuesta.
 
 ---
 
