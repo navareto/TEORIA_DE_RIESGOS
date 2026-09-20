@@ -14,11 +14,153 @@ format:
 
 ::: {.callout-tip appearance="simple"}
 Material de apoyo para defender el Taller 7 en sustentación oral. **No hace
-parte de las respuestas calificadas**: es el resumen de qué defender, con qué
-cifra, y en qué bloque del taller está cada una.
+parte de las respuestas calificadas.** Está organizado de lo general a lo
+particular: primero de qué se trata el problema (para explicárselo a
+cualquiera), luego el vocabulario, luego cada punto del taller paso a paso, y
+al final las cifras, las preguntas probables y los argumentos fuertes.
 :::
 
-## La respuesta en treinta segundos
+# El problema, explicado a alguien que no sabe estadística
+
+Un fondo de pensiones tiene **800.000 millones de pesos** que va a invertir en
+**cuatro acciones colombianas**: Ecopetrol (petróleo), Banco de Bogotá (banca),
+Grupo Sura (holding financiero) e ISA (transmisión eléctrica). La única decisión
+que hay que tomar es **cómo repartir esa plata entre las cuatro**: cuánto por
+ciento a cada una.
+
+Hoy el fondo la tiene repartida **30 / 20 / 25 / 25**. Nadie sabe muy bien de
+dónde salió ese reparto; es la "cartera declarada". La pregunta del taller es:
+**¿ese reparto es bueno, o se puede hacer mejor?**
+
+Para responder, uno mira cómo se comportaron las cuatro acciones en los últimos
+ocho años (casi 2.000 días de bolsa) y con eso estima dos cosas de cada
+combinación posible: **cuánto rinde** en promedio y **cuánto oscila** (qué tan
+brusco es el sube-y-baja, que es la forma de medir el riesgo). Entre todas las
+combinaciones posibles hay unas pocas que son *las mejores*: para cada nivel de
+riesgo, la que más rinde. Esas combinaciones "insuperables" forman una curva
+que se llama la **frontera eficiente**. Si tu reparto está sobre la curva,
+estás bien; si está por debajo, hay otro reparto que te da lo mismo con menos
+riesgo, o más con el mismo riesgo.
+
+El taller hace tres cosas con eso:
+
+1. **Mide dónde está el fondo respecto a la frontera** (Partes 1 y 3): no está
+   sobre ella, pero tampoco está lejos.
+2. **Mide qué tan confiable es la frontera misma** (Partes 2 y 4): resulta que
+   se mueve mucho según qué período de datos uno mire, y perseguirla cuesta
+   plata en comisiones.
+3. **Recomienda qué hacer** (Parte 7): mover el reparto a **30 / 18,74 / 21,26
+   / 30**, que tiene *el mismo riesgo* que hoy pero rinde unos **2.846 millones
+   más al año**, por un costo único de **80 millones**.
+
+Y hay un hilo que atraviesa todo el taller: una **trampa de medición**. El
+"rendimiento" que sale de la fórmula estándar (que el taller llama `w′μ`) **no
+es** la plata que el fondo realmente ganaría; hay que corregirlo para
+comparar contra el TES o convertirlo a pesos. Muchas conclusiones cambian
+cuando se hace esa corrección, y varias de las respuestas del taller consisten
+en mostrar exactamente cuánto cambian.
+
+# Glosario
+
+**Cartera (o portafolio).** El conjunto de inversiones. Aquí, las cuatro acciones
+y cuánto hay en cada una.
+
+**Peso.** El porcentaje de la plata que está en cada acción. Los cuatro pesos
+suman 100 %. "30 / 20 / 25 / 25" son los pesos de la cartera declarada.
+
+**Retorno (o rentabilidad).** Cuánto gana la inversión, en porcentaje anual.
+
+**Retorno logarítmico.** Una forma de calcular el retorno diario,
+$\ln(P_t / P_{t-1})$, que tiene una ventaja (los retornos de días consecutivos
+se pueden sumar) y una trampa (los retornos de *acciones distintas* **no** se
+pueden promediar con los pesos; ver "convención `w′μ`").
+
+**Convención `w′μ`.** La forma estándar de calcular el retorno de una cartera:
+peso de cada acción por su retorno, y se suma. El capítulo la usa, pero con
+retornos logarítmicos **da un número que no es el retorno real** de la cartera.
+El sesgo vale exactamente el beneficio de diversificación: castiga a las
+carteras repartidas.
+
+**Retorno real.** El retorno que la cartera efectivamente habría tenido si se
+rebalancea a diario. Es el único que se puede comparar contra el TES o convertir
+a pesos. Para la cartera declarada es 11,83 %, frente a 7,69 % en la convención.
+
+**Volatilidad.** La medida de riesgo: cuánto oscila el valor de la cartera en
+un año. Es una desviación típica. 25 % de volatilidad quiere decir que un año
+"normal" puede terminar 25 puntos arriba o abajo de lo esperado.
+
+**Covarianza.** Cuánto se mueven juntas dos acciones, *incluyendo* cuánto se
+mueve cada una. Es lo que el optimizador necesita.
+
+**Correlación.** Cuánto se mueven juntas dos acciones, *sin* tener en cuenta
+cuánto se mueve cada una (va de −1 a 1). Optimizar con correlación en vez de
+covarianza es un error clásico: equivale a suponer que las cuatro acciones son
+igual de volátiles.
+
+**Frontera eficiente.** La curva de las carteras "insuperables": para cada nivel
+de riesgo, la de mayor retorno. Todo lo que está debajo de la curva se puede
+mejorar.
+
+**Cartera de mínima varianza.** El punto de la frontera con el menor riesgo
+posible. Es especial porque es el único punto que **no depende del retorno
+esperado** (μ), solo del riesgo (Σ), y el retorno esperado es lo que peor se
+estima.
+
+**Cartera tangente (o de máximo Sharpe).** El punto de la frontera con la mejor
+relación retorno-riesgo. En este panel, sin restricciones, es un desastre (ver
+"fórmula cerrada"); con la restricción de no vender en corto es 5,52 % Ecopetrol
+y 94,48 % ISA.
+
+**Razón de Sharpe.** Cuánto retorno *por encima del TES* consigue la cartera por
+cada unidad de riesgo: $(\text{retorno} - r_f) / \text{volatilidad}$. Más alto
+es mejor. 0,20 es razonable para acciones; 0,40 es excepcional.
+
+**Tasa libre de riesgo ($r_f$, "el TES").** Lo que rinde invertir sin riesgo. El
+curso fija 7 % efectivo anual, que en la escala logarítmica es
+$\ln(1{,}07) = 6{,}7659\,\%$.
+
+**CML (línea del mercado de capitales).** La recta que une el TES con la cartera
+tangente. Cualquier punto de esa recta es una mezcla de plata en el TES y plata
+en la tangente.
+
+**Venta en corto.** Vender una acción que no se tiene (pedirla prestada). Un
+peso negativo en una cartera significa venta en corto. Está prohibida para
+fondos de pensiones.
+
+**Tope (límite de concentración).** El máximo porcentaje que puede ir a una
+sola acción. El capítulo usa 30 %; mi tope asignado es 35 %.
+
+**Fórmula cerrada.** La solución "de lápiz y papel" para la tangente. Funciona
+solo si su denominador es positivo; en este panel es **negativo** (−0,0784) y
+la fórmula devuelve una cartera absurda.
+
+**Ventana de estimación.** El período de datos que se usa para calcular μ y Σ.
+"Panel completo" son los 1.916 retornos; "mi ventana" son los últimos 750.
+
+**Dentro de muestra / fuera de muestra.** Una cifra está *dentro de muestra*
+cuando se calcula con los mismos datos que se usaron para estimar el modelo (es
+optimista por construcción). Está *fuera de muestra* cuando se calcula sobre
+datos que el modelo no vio.
+
+**Rebalanceo.** Volver a ajustar los pesos a los que dice el modelo. Cada
+rebalanceo implica comprar y vender, y eso cuesta.
+
+**Turnover (rotación).** Qué fracción de la cartera se compra/vende en un
+rebalanceo: la mitad de la suma de los cambios absolutos de peso. 57 % anual
+quiere decir que en un año se transa más de la mitad del fondo.
+
+**Puntos básicos (pb).** Centésimas de punto porcentual. 20 pb = 0,20 %.
+
+**pp (puntos porcentuales).** La diferencia entre dos porcentajes. De 25,02 % a
+24,40 % son 0,62 pp.
+
+**Banda de no-acción.** Regla operativa: no rebalancear mientras el peso real
+esté dentro de ±X pp del objetivo. Evita pagar comisiones por corregir ruido.
+
+**Backtest.** Simular cómo habría funcionado una estrategia en el pasado,
+usando en cada momento solo la información disponible hasta ese momento.
+
+# La respuesta en treinta segundos
 
 Si solo hay tiempo para una frase: *«La cartera del fondo no está sobre la
 frontera, pero tampoco está mal. Lo que recomiendo es moverla a 30 / 18,74 /
@@ -32,14 +174,360 @@ rinde un Sharpe de 0,1809 y la cartera que el fondo ya tiene rinde 0,2023.
 Habría sido pedirle al comité renunciar a rentabilidad y a eficiencia al mismo
 tiempo.»*
 
-## Las cifras que hay que tener en la cabeza
+# El taller paso a paso
+
+Para cada punto: **qué pregunta de verdad**, **qué hicimos**, **qué salió**, y
+**cómo decirlo en una frase**.
+
+## Parte 1 · Reproducir el capítulo
+
+**Qué busca la parte.** Antes de hacer nada nuevo, demostrar que el montaje es
+correcto reproduciendo las cifras del capítulo. Y declarar *antes* de calcular
+la ventana, la convención y las restricciones, porque elegirlas después de ver
+los pesos es la forma más fácil de engañarse.
+
+### 1.1 — Las cifras del capítulo
+
+- **Qué pregunta:** ¿su código da lo mismo que el libro?
+- **Qué hicimos:** cargar los precios, calcular retornos logarítmicos, estimar
+  μ y Σ con todo el panel, y resolver la mínima varianza sin cortos.
+- **Qué salió:** declarada 7,69 % / 25,02 %; mínima varianza 20,76 · 38,13 ·
+  15,97 · 25,14 con 23,93 %. Correlación media 0,227. Exacto.
+- **En una frase:** *«Reproduje el capítulo al decimal antes de tocar nada; si
+  aquí no cuadra, nada de lo que sigue vale.»*
+
+### 1.2 — Las dos brechas
+
+- **Qué pregunta:** ¿qué tan lejos está la cartera del fondo de la frontera, y
+  cuánto vale esa distancia en pesos?
+- **Qué hicimos:** buscar dos puntos de la frontera: el que tiene el mismo
+  retorno que la declarada (para ver cuánto menos riesgo se podría tener) y el
+  que tiene el mismo riesgo (para ver cuánto más retorno). Para el segundo
+  usamos `uniroot()` acotado al lado eficiente de la curva —el bug que yo mismo
+  diagnostiqué: si se busca en toda la curva, cruza el punto de mínima varianza
+  y la función no cambia de signo.
+- **Qué salió:** al mismo retorno, 24,40 % de volatilidad (**0,62 pp menos** =
+  4.960 millones de desviación típica). Al mismo riesgo, 8,43 % en la convención
+  (0,74 pp más), pero **0,47 pp reales = 4.232 millones al año**.
+- **La trampa del punto:** las dos brechas se pasan a pesos de forma distinta.
+  El riesgo se *multiplica* (0,62 % × 800.000). El retorno se *compone*
+  ($W(e^{r_1} - e^{r_2})$), y además hay que medirlo sin la convención primero.
+  La única cifra que puede ir a un acta es **4.232 millones**: los 4.960 no son
+  plata, son una medida de oscilación.
+- **En una frase:** *«El fondo deja 4.232 millones al año sobre la mesa sin
+  recibir menos riesgo a cambio; esa es la cifra, y las otras dos son otra cosa
+  aunque también salgan en millones.»*
+
+### 1.3 — Dibujar la frontera
+
+- **Qué pregunta:** ¿alguna de las cuatro acciones, sola, es eficiente?
+- **Qué hicimos:** trazar la frontera con 25 puntos y superponer las cuatro
+  acciones, la declarada y la mínima varianza (gráfico interactivo).
+- **Qué salió:** **ISA** es el único activo eficiente, porque tiene el mayor
+  retorno (12,88 %) y sin cortos ninguna mezcla puede superar al mejor activo
+  —es el extremo de la curva, por construcción, no por mérito—. Bogotá queda
+  *dominado*: más riesgo (33,15 %) y menos retorno (0,31 %) que el punto donde
+  arranca la curva.
+- **En una frase:** *«ISA es eficiente porque la restricción lo pone en la
+  punta, no porque sea buena inversión; y Bogotá no está "a la derecha" de la
+  curva, está debajo de donde la curva empieza.»*
+
+### 1.4 — El error de la correlación
+
+- **Qué pregunta:** ¿qué pasa si se optimiza con la matriz de correlación en
+  vez de la de covarianzas (el error de la IA en el capítulo)?
+- **Qué hicimos:** repetir la mínima varianza con `cor(r)` en lugar de `cov(r)`.
+- **Qué salió:** pesos mucho más parejos: 23,32 · 27,98 · 24,99 · 23,71. Bogotá
+  baja de 38 % a 28 % y Sura sube de 16 % a 25 %.
+- **Por qué:** usar correlación borra la información de cuánto se mueve cada
+  acción. Bogotá es la menos volátil (33 %) y por eso la covarianza la premia;
+  Sura es la más volátil (43 %) y por eso la castiga. La correlación no ve
+  ninguna de las dos cosas. Evaluada con la Σ real, esa cartera tiene 24,39 % de
+  riesgo contra 23,93 % de la verdadera mínima varianza.
+- **En una frase:** *«Optimizar con correlación es suponer que las cuatro
+  acciones son igual de volátiles, y no lo son: van del 33 % al 43 %.»*
+
+## Parte 2 · Mi propia ventana y mi propio tope
+
+**Qué busca la parte.** Mostrar que la respuesta depende de qué datos se miren.
+Cada estudiante tiene una ventana y un tope distintos según su cédula; los míos
+son **750 ruedas** y **35 %**.
+
+### 2.1 — Reestimar con mi ventana
+
+- **Qué salió:** mínima varianza 22,65 · 35,00 · 15,59 · 26,76, con 22,69 % de
+  riesgo. Los pesos se parecen a los del panel completo (la diferencia mayor es
+  Bogotá, 3,13 pp = 25.020 millones). Pero el retorno **casi se triplica**:
+  16,08 % contra 6,32 %.
+- **Qué significa:** las últimas 750 ruedas fueron un período de retornos altos.
+  Σ cambió poco (22,7 % vs 23,9 %); μ cambió muchísimo. Esto no es un hallazgo
+  sobre las acciones, es la demostración de que **el retorno esperado es lo que
+  peor se estima** —es el resultado clásico de la literatura (Merton, 1980).
+- **En una frase:** *«Con mi ventana los pesos se parecen pero el retorno se
+  triplica: el riesgo se estima bien, el retorno no.»*
+
+### 2.2 y 2.3 — ¿Ata el tope? ¿Cuánto cuesta?
+
+- **Qué salió:** ata, pero por 0,13 pp: sin tope Bogotá saldría en 35,13 %. Por
+  eso el costo es prácticamente cero (la volatilidad no cambia en la cuarta
+  cifra decimal; el Sharpe cae de 0,4107 a 0,4104).
+- **Por qué no contradice al capítulo:** el tope del 30 % sobre el panel
+  completo sí cuesta 0,19 pp porque ahí recorta una posición grande. Una
+  restricción cuesta según cuánto se aleje del óptimo sin restricción; la mía
+  casi no se aleja.
+- **En una frase:** *«Mi tope ata pero no duele, porque el óptimo ya lo
+  respetaba casi solo.»*
+
+### 2.4 — Mi frontera contra la del panel
+
+- **Qué salió:** dos curvas que casi no se tocan: la mía vive entre 12,6 % y
+  17,9 % de retorno; la del panel entre 0,3 % y 12,9 %. Mismo rango de riesgo.
+- **Qué le habría recomendado al fondo:** lo mismo (una mínima varianza) pero
+  con casi 10 pp más de retorno prometido —una promesa que es enteramente
+  producto de haber cortado el panel donde el mercado venía subiendo.
+- **En una frase:** *«Si el comité hubiera aprobado mi ventana, le habría
+  prometido 10 puntos más de retorno con el mismo riesgo, y esa promesa habría
+  sido un artefacto de la fecha de corte.»*
+
+## Parte 3 · El activo libre de riesgo y la CML
+
+**Qué busca la parte.** Meter el TES en el análisis: encontrar la cartera
+tangente, medir Sharpe, y ver qué promete la CML.
+
+### 3.1 — La tangente
+
+- **Qué hicimos:** resolver el problema por el cambio de variable del capítulo
+  ($\min y'\Sigma y$ sujeto a $(\mu - r_f\mathbf{1})'y = 1$, $y \ge 0$, luego
+  normalizar), **no** con la fórmula cerrada.
+- **Qué salió:** 5,52 · 0 · 0 · 94,48. Retorno 12,67 % (13,18 % real),
+  volatilidad 35,28 %, Sharpe 0,1673. Los Sharpe individuales explican la
+  composición: ISA 0,1670 (el mejor), Ecopetrol 0,0593, Sura ≈0, Bogotá −0,1948.
+  Sin cortos, la tangente solo puede tomar posiciones largas, así que ignora a
+  los de Sharpe negativo o nulo.
+- **En una frase:** *«La tangente es casi todo ISA porque es el único con
+  Sharpe decente; es matemáticamente óptima e inejecutable para un fondo.»*
+
+### 3.2 — Las dos cifras incómodas
+
+- **Primera trampa (de convención):** el Sharpe de la mínima varianza sale
+  −0,0188 con `w′μ`, pero esa cartera rindió 10,22 % de verdad y su Sharpe real
+  es **+0,1445**. Lo que sobrevive a la corrección: sigue siendo la peor
+  relación riesgo-retorno de las carteras de referencia.
+- **Segunda trampa (de magnitud):** el Sharpe de Grupo Sura es −0,0000094 no por
+  convención sino porque su retorno (6,7655 %) está cuatro diezmilésimas por
+  debajo del TES (6,7659 %). Una cosa es la diferencia de retorno (0,0004 pp) y
+  otra el Sharpe (−0,0000094); confundirlas es confundir unidades.
+- **¿Sacar a Sura?** No por sus correlaciones (esa explicación es falsa: con las
+  correlaciones apagadas le tocaría 19,17 % y con la matriz real recibe 15,97 %,
+  le *restan*). Lo que lo defiende es lo que cuesta sacarlo, y ahí resulta que
+  Sura es **el más barato de excluir** (+0,91 pp de riesgo), seguido de
+  Ecopetrol (+1,26), ISA (+1,71) y Bogotá (**+3,86**, el que de verdad no se
+  puede tocar).
+- **Nota sobre "3 activos":** para medir cuánto cuesta sacar un emisor hay que
+  reoptimizar sin él; son cuatro carteras hipotéticas de tres activos usadas
+  como vara de medir, el portafolio del taller sigue siendo de cuatro.
+- **En una frase:** *«El Sharpe negativo de la mínima varianza es de la
+  convención; el de Sura es de magnitud; y a Sura no lo salva la correlación
+  sino que sacarlo cuesta poco, lo que en realidad lo hace prescindible.»*
+
+### 3.3 — La CML
+
+- **Qué salió en la convención:** a la volatilidad de la declarada (25,02 %), la
+  recta ofrece 10,95 %, **3,26 pp** más. Eso implica 70,93 % en la tangente y
+  29,07 % en TES.
+- **Por qué no es ejecutable:** 94,5 % de la porción riesgosa en un solo emisor,
+  y un fondo de pensiones tiene pasivos con fechas, no solo una función de
+  utilidad.
+- **Qué salió sin la convención:** **12,60 % contra 11,83 %, 0,77 pp, 6.990
+  millones**. La recta gana, pero cuatro veces menos de lo que la convención
+  sugiere. Para calcular ese 12,60 % hubo que simular la mezcla día a día
+  (no extrapolar el Sharpe real linealmente, porque el arrastre por varianza
+  escala con el cuadrado de la fracción invertida).
+- **Cuál va al comité:** 0,77 pp / 6.990 millones. Los 3,26 pp son una
+  comparación entre dos números que nunca fueron el retorno de nada.
+- **En una frase:** *«La CML promete 3,26 puntos en el papel y 0,77 en plata
+  real; llevar el primero al comité es prometer cuatro veces más de lo que el
+  fondo va a ver.»*
+
+### 3.4 — La tangente con tope
+
+- **Qué salió:** con mi tope (35 %): 35 · 0 · 30 · 35, Sharpe 0,1056. Los cuatro
+  topes ordenados: 0,0198 (25 %) < 0,0714 (30 %) < 0,1056 (35 %) < 0,1200 (40 %).
+- **Por qué es monótono:** conjuntos anidados. Todo lo permitido con tope 25 %
+  está permitido con 30 %, etc. El máximo sobre un conjunto más grande nunca es
+  menor. No es un patrón de los datos, es necesario.
+- **La verificación cruzada:** el 0,0714 del tope 30 % lo daba el enunciado; mi
+  función lo reprodujo exacto sin haber sido ajustada para eso. Ese es el
+  respaldo de mi 0,1056.
+- **En una frase:** *«Un tope más laxo nunca puede empeorar el mejor Sharpe
+  alcanzable; el orden tenía que salir así.»*
+
+## Parte 4 · Lo que cuesta perseguir la frontera
+
+**Qué busca la parte.** Todo lo anterior supone que uno estima una vez y se
+queda quieto. Esta parte pregunta qué pasa si uno intenta *seguir* la frontera
+a medida que se mueve.
+
+### 4.1 y 4.2 — La serie rodante y el turnover
+
+- **Qué hicimos:** reestimar la mínima varianza cada 21 ruedas con ventana de
+  250, sobre las últimas 1.000 ruedas: 48 rebalanceos.
+- **Qué salió:** los pesos **saltan**. Bogotá pasa de 58,17 % a 25,76 % en cinco
+  reestimaciones. Turnover promedio 4,76 % por rebalanceo, **57,14 % anual**, y
+  un rebalanceo que mueve **31,08 %** de la cartera él solo.
+- **Por qué importa:** esto es mínima varianza, la parte que ni siquiera depende
+  de μ. Si lo mejor estimado salta así, cualquier otro punto salta más.
+- **En una frase:** *«Perseguir la frontera implica transar más de la mitad del
+  fondo cada año, y eso es solo el punto más estable de la curva.»*
+
+### 4.3 — ¿Sobrevive la ganancia al costo?
+
+- **Qué salió:** a 20 pb, el costo es **902 millones al año**. La promesa de
+  1.2 era 4.232. Sobrevive con margen (el costo es ~21 % de la ganancia).
+- **El sesgo:** la comparación favorece a la frontera. Los 4.232 están medidos
+  *dentro de muestra* (con todo el panel, incluido lo que se pretende batir);
+  los 902 están medidos *fuera de muestra* (reestimando sin mirar al futuro).
+  Que sobreviva incluso así es buena señal, pero 4,7× no es garantía.
+- **De dónde sale el 902:** costo efectivamente incurrido en los 47 rebalanceos
+  dividido entre 3,97 años. La anualización teórica (57,14 % × 20 pb × fondo)
+  daría 914; la diferencia es que en 3,97 años caben 11,8 rebalanceos al año, no
+  12.
+- **En una frase:** *«La ganancia sobrevive al costo, pero la comparación está
+  cargada a su favor: la promesa es dentro de muestra y el costo no.»*
+
+### 4.4 — Alargar la ventana
+
+- **Qué salió:** con ventana de 1.000 y reestimación semestral, el turnover cae
+  a **10,13 %** (−82 %). Pero evaluando las dos estrategias fuera de muestra
+  sobre el mismo período, la ventana larga entrega **0,97 pp menos de retorno
+  realizado** y **no mejora la volatilidad** (sube 0,15 pp).
+- **Qué se pierde, en número:** capacidad de reaccionar. Se paga en retorno, no
+  en riesgo.
+- **En una frase:** *«La ventana larga ahorra comisiones pero cuesta un punto de
+  retorno al año y no compra ninguna reducción de riesgo.»*
+
+### 4.5 — Los dos defectos del panel
+
+- **Defecto 1 (dato malo):** el 19 y 20 de febrero de 2025 los cuatro precios
+  caen 9-18 % y se revierten al día siguiente. Cuatro emisores de sectores
+  distintos no hacen eso por una razón de mercado: es un glitch. Quitarlo mueve
+  los pesos 1,92 pp y la volatilidad 1,14 pp. Acotado, y una vez corregido no
+  vuelve.
+- **Defecto 2 (elección metodológica):** medir el retorno cada cinco ruedas
+  (bloques de cinco días) sube la correlación media de 0,227 a **0,339** y baja
+  a Ecopetrol de 20,76 % a **12,79 %**: casi 8 pp en una sola posición.
+- **Cuál preocupa más:** el segundo. El primero es un error identificable y
+  corregible; el segundo es una decisión arbitraria (cada cuántas ruedas, y
+  desde cuál) que cambia la recomendación sin criterio objetivo para preferirla.
+- **Las cinco fases:** el 0,339 es la fase 1 de 5. Las otras dan 0,320 · 0,325 ·
+  **0,226** · 0,309; por semanas de calendario, 0,272. El 0,339 es el **máximo**,
+  no el típico. La conclusión cualitativa ("submuestrear sube la correlación")
+  resiste; la cifra puntual no.
+- **Mi regla:** quien submuestree una serie declara frecuencia, fase, y el rango
+  de las otras fases. Un solo número no es defendible.
+- **En una frase:** *«El dato malo mueve dos puntos y se arregla; la elección de
+  frecuencia mueve ocho y se puede repetir con cualquier otra elección
+  "razonable" — esa es la peligrosa.»*
+
+## Parte 5 · Auditar a la IA
+
+**Qué busca la parte.** Pedirle a un modelo de lenguaje que construya la cartera
+óptima, y auditar su respuesta sin ayuda de IA. Es el único punto de nivel 1.
+
+- **Qué hicimos:** el prompt pidió deliberadamente la fórmula cerrada, todo el
+  histórico, sin costos ni restricciones. La respuesta entregó la cartera del
+  monstruo (−147 / 927 / 28 / −708) como "definitiva".
+- **Qué encontré (siete defectos, cada uno con dónde / qué tipo / cuánto cuesta
+  / cómo se arregla):** cruzar logarítmicos con tasas efectivas; fórmula cerrada
+  con ventas en corto; el signo del denominador; fuga de información temporal;
+  precisión engañosa sin rangos; omitir el rebalanceo; y usar el promedio
+  histórico como oráculo.
+- **Qué hizo bien (5.3):** usó covarianza (no correlación), anualizó
+  correctamente, y la sintaxis de la fórmula cerrada es la correcta —solo que no
+  aplica en este panel.
+- **Cómo defenderla:** esta parte la hice solo. La IA generó el material a
+  auditar (que el enunciado permite) y revisó únicamente la *estructura* de mi
+  auditoría ya escrita (que tuviera los cuatro elementos), nunca el contenido.
+
+## Parte 6 · Bitácora
+
+**Qué busca.** Registrar cada intercambio con la IA. La mía está redactada desde
+mi intervención: qué le pedí, qué devolvió, y **qué hice yo con eso**. Las
+filas más fuertes: el bug que diagnostiqué solo (fila 1), la revisión de
+coherencia antes de avanzar (fila 3), la corrección de "3 activos" (fila 6), el
+rechazo de la recomendación de libro (fila 10) y el `NaN` que investigué en vez
+de ignorar (fila 11).
+
+## Parte 7 · La recomendación
+
+### 7.1 — Los tres regímenes
+
+- **Qué salió:** sin restricciones, −147,15 · 927,45 · 28,04 · −708,34 con Sharpe
+  −0,2891; solo sin cortos, 5,52 · 0 · 0 · 94,48 con 0,1673; con tope 30 %, 30 ·
+  10 · 30 · 30 con 0,0714.
+- **Por qué la primera es un monstruo y no un error:** el denominador de la
+  fórmula cerrada es −0,0784. Al dividir por un negativo se invierten los signos
+  y la fórmula entrega la cartera que *minimiza* el Sharpe. El álgebra está
+  bien; el supuesto de que existe una tangente no.
+- **La cifra que cierra la discusión:** apalancamiento bruto del **1.811 %** y
+  **3 ruedas de 1.916 con pérdida superior al 100 % del capital** (la peor,
+  −241,7 %). Por eso su retorno real no aparece: el logaritmo de un fondo
+  quebrado no existe. Esto salió de investigar un aviso de `NaN` que era fácil
+  de ignorar.
+- **En una frase:** *«No es una cartera agresiva; es una que liquida al fondo
+  tres veces en ocho años.»*
+
+### 7.2 — El punto recomendado
+
+- **El punto:** 30 · 18,74 · 21,26 · 30.
+- **Criterio:** retorno objetivo a riesgo constante — **no** mínima varianza.
+  Con retornos reales, la declarada tiene Sharpe 0,2023 y la mínima varianza con
+  tope 0,1809. Recomendar mínima varianza era pedir renunciar a 0,70 pp de
+  retorno *y* empeorar la eficiencia. El punto recomendado tiene **la misma
+  volatilidad exacta** (25,02 %) y **0,32 pp más** de retorno real: **2.846
+  millones al año**, por **80 millones** de costo único (turnover 5 %).
+- **Restricción que lo hace ejecutable:** tope del 30 %. Sin él, el óptimo pide
+  927 % en Bogotá.
+- **Banda de incertidumbre:** reestimando el mismo criterio en las 48 ventanas
+  rodantes, cada emisor recorre **los 20 pp completos** entre el piso (10 %) y el
+  tope (30 %): 160.000 millones por emisor. Por eso es una política con bandas,
+  no un punto.
+- **Honestidad:** los 12,14 % son dentro de muestra. Los 2.846 millones son la
+  cota superior.
+- **En una frase:** *«Mismo riesgo, más plata, se paga en diez días — y lo
+  gobierno con bandas porque el óptimo se mueve por todo el rango según la
+  ventana.»*
+
+### 7.3 — La nota al comité
+
+Una página sin fórmulas. Recomendación en la primera frase, evidencia en plata,
+costo, qué se pierde con cada alternativa (no hacer nada / mínima varianza /
+óptimo sin restricción / perseguir el óptimo), y **cuatro compromisos con
+fecha**: ejecutar antes del 20-oct-2026, bandas de ±5 pp, revisiones el
+31-dic-2026 y 30-jun-2027 con ventana declarada de antemano, y traer al comité
+la comparación prometido-vs-obtenido.
+
+### 7.4 — La objeción a la ventana de 125
+
+- **Las cifras:** con las 125 ruedas más recientes Bogotá pesa 50,49 %; con 125
+  que terminan 100 ruedas antes, 76,59 %; en 72 cortes distintos, entre 17,22 %
+  y 77,50 %.
+- **El argumento (sin decir "sobreajuste"):** mismo método, misma longitud,
+  mismos datos — lo único que cambia es dónde se para el reloj. Un
+  procedimiento que devuelve 17 % o 78 % según eso no está midiendo qué emisor
+  es estable, está copiando el accidente del tramo que se le mostró.
+- **En una frase:** *«La ventana de 125 no entrega un resultado, entrega el
+  que uno quiera; antes de discutir el 76,59 % hay que exigir que la fecha de
+  corte se declare antes de calcular.»*
+
+# Las cifras que hay que tener en la cabeza
 
 | Concepto | Cifra | Dónde está |
 |---|---|---|
 | Cartera declarada | 7,69 % `w′μ` · **11,83 % real** · 25,02 % vol | 1.1 |
 | Mínima varianza | 20,76 · 38,13 · 15,97 · 25,14 · 23,93 % vol | 1.1 |
 | Correlación media del panel | 0,227 | 1.1 |
-| Brecha al mismo riesgo (real) | 0,47 pp = **4.242 millones/año** | 1.2 |
+| Brecha al mismo riesgo (real) | 0,47 pp = **4.232 millones/año** | 1.2 |
 | Brecha de riesgo | 0,62 pp = 4.960 millones de desviación típica | 1.2 |
 | Único emisor eficiente | ISA, 12,88 % (extremo de la frontera) | 1.3 |
 | Ventana y tope propios | 750 ruedas · tope 35 % | 2 |
@@ -48,12 +536,12 @@ tiempo.»*
 | Costo de excluir cada emisor | Sura +0,91 < Eco +1,26 < ISA +1,71 < **Bogotá +3,86 pp** | 3.2 |
 | CML a la volatilidad de la declarada | 3,26 pp con `w′μ`, **0,77 pp real = 6.990 millones** | 3.3 |
 | Turnover anual persiguiendo la frontera | 57,14 % · máximo 31,08 % en un solo rebalanceo | 4.2 |
-| Costo de perseguirla | **902 millones/año** contra 4.242 de ganancia | 4.3 |
+| Costo de perseguirla | **902 millones/año** contra 4.232 de ganancia | 4.3 |
 | Cartera sin restricciones | −147,15 · 927,45 · 28,04 · −708,34 · Sharpe −0,2891 | 7.1 |
 | **Recomendación** | **30 · 18,74 · 21,26 · 30 · 25,02 % vol · +2.846 millones** | 7.2 |
 | Banda de incertidumbre | 10 %–30 % por emisor = 160.000 millones | 7.2 |
 
-## Las ocho preguntas que probablemente le van a hacer
+# Las ocho preguntas que probablemente le van a hacer
 
 **1. ¿Por qué `w′μ` no es el retorno de la cartera?**
 Porque los retornos logarítmicos no se suman entre activos, solo a lo largo del
@@ -68,10 +556,11 @@ su Sharpe real es **+0,1445**. Lo que sí sobrevive al corregirlo es que sigue
 siendo la peor relación riesgo-retorno de las carteras de referencia.
 
 **3. ¿Por qué no usó la fórmula cerrada de la tangente?**
-Porque su denominador, `1′Σ⁻¹(μ−rf)`, vale **−0,0784** en este panel. Al dividir
-por un negativo se invierten todos los signos y la fórmula devuelve la cartera
-que *minimiza* el Sharpe. Usé programación cuadrática con `w ≥ 0`, que no depende
-del signo de ese denominador.
+Porque su denominador, $\mathbf{1}'\Sigma^{-1}(\mu - r_f\mathbf{1})$, vale
+**−0,0784** en este panel. Al dividir por un negativo se invierten todos los
+signos y la fórmula devuelve la cartera que *minimiza* el Sharpe. Usé
+programación cuadrática con $w \ge 0$, que no depende del signo de ese
+denominador.
 
 **4. Y si igual la usara, ¿qué pasaría?**
 Pediría 927 % en Bogotá y −708 % en ISA: apalancamiento bruto del **1.811 %**.
@@ -86,9 +575,9 @@ casi por completo al siguiente. Un banco, una petrolera, un holding financiero y
 una transmisora eléctrica no se mueven juntas así por una razón real; esa
 sincronía con reversión inmediata es firma de dato malo, no de mercado.
 
-**6. Si la frontera promete 4.242 millones y perseguirla cuesta 902, ¿por qué no
+**6. Si la frontera promete 4.232 millones y perseguirla cuesta 902, ¿por qué no
 la perseguimos sin más?**
-Porque las dos cifras no están medidas con la misma vara. Los 4.242 salen de
+Porque las dos cifras no están medidas con la misma vara. Los 4.232 salen de
 estimar μ y Σ sobre **todo** el panel, incluido el período que se pretende batir
 —es una promesa dentro de muestra—; los 902 salen de reestimar rueda a rueda sin
 mirar al futuro. El sesgo favorece a la frontera, así que 4,7× de margen no es
@@ -107,7 +596,7 @@ distintos, mismo método, mismos datos—. Por eso la recomendación no es un pu
 que se defiende al decimal, sino un punto que se gobierna con bandas de
 no-acción de ±5 pp y revisión semestral con fecha declarada de antemano.
 
-## Los cuatro puntos donde el trabajo se defiende solo
+# Los cuatro puntos donde el trabajo se defiende solo
 
 1. **El hallazgo que cambió la recomendación.** Comparar las candidatas con
    retornos reales —y no con la convención— mostró que la mínima varianza es
@@ -127,7 +616,7 @@ no-acción de ±5 pp y revisión semestral con fecha declarada de antemano.
    diaria. Reportar 0,339 sin decir «fase 1 de 5» es elegir el resultado más
    favorable sin declararlo.
 
-## Cómo defender el uso de IA, si lo preguntan
+# Cómo defender el uso de IA, si lo preguntan
 
 La usé como acelerador de **procesamiento**: correr la optimización cuadrática
 sobre 1.916 ruedas, repetir el mismo cálculo en 48 ventanas rodantes, simular la
@@ -148,7 +637,7 @@ Y la parte 5 —la auditoría— la hice sin ninguna asistencia, como exige el t
 la IA solo generó la respuesta que había que auditar, que es lo que el enunciado
 explícitamente permite.
 
-## Si no sabe una respuesta
+# Si no sabe una respuesta
 
 No improvisar una cifra. El taller tiene todos los bloques etiquetados
 (`parte3-cml`, `parte4-turnover`, `parte7-banda`, …): decir en qué bloque está el
