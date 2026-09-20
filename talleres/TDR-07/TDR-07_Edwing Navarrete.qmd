@@ -996,6 +996,68 @@ fondo de pensiones a partir de un archivo de precios diarios de cuatro acciones,
 con una tasa libre de riesgo del 7 % efectivo anual, y recomiende los pesos»*.
 Pegue aquí el prompt exacto y la respuesta completa, sin editarlas.
 
+**Prompt usado:**
+
+> Actúa como un analista cuantitativo experto en la Teoría Moderna de Carteras
+> de Markowitz. Necesito que construyas la cartera óptima (el portafolio
+> tangente que maximiza el ratio de Sharpe) de un fondo de pensiones a partir
+> de un archivo de precios diarios de cuatro acciones. Utiliza una tasa libre
+> de riesgo del 7 % efectivo anual. Para lograrlo, calcula los retornos
+> logarítmicos esperados y la matriz de covarianzas utilizando todo el
+> histórico disponible. Luego, aplica la solución analítica cerrada (álgebra
+> matricial pura) para encontrar los pesos exactos de la cartera. Recomiéndame
+> la distribución porcentual definitiva e inamovible que el fondo debe
+> implementar para maximizar su utilidad. Asume mercados eficientes sin
+> fricciones; no me interesan los costos de rebalanceo ni las restricciones
+> operativas, solo quiero la pureza matemática del modelo.
+
+**Respuesta obtenida (completa, sin editar):**
+
+> ## Cartera Óptima — Portafolio Tangente (Máximo Sharpe)
+>
+> ### Metodología
+>
+> 1. Calculé los retornos logarítmicos diarios de los cuatro activos:
+>    `r_t = ln(P_t / P_{t-1})`, usando todo el histórico disponible en el
+>    archivo.
+> 2. Anualicé el vector de retornos medios (μ) y la matriz de covarianzas (Σ)
+>    multiplicando por 252 días de mercado.
+> 3. Convertí la tasa libre de riesgo efectiva anual del 7 % a su equivalente
+>    en tiempo continuo para que fuera compatible con la escala logarítmica de
+>    los retornos: `r_f = ln(1.07) ≈ 6,77 %`.
+> 4. Apliqué la solución analítica cerrada de Markowitz para el portafolio
+>    tangente (máximo Sharpe), que en notación matricial es:
+>
+>    `w* = [Σ⁻¹ (μ − r_f · 1)] / [1' Σ⁻¹ (μ − r_f · 1)]`
+>
+>    Esta es la solución de forma cerrada estándar: se invierte la matriz de
+>    covarianzas, se pondera por el exceso de retorno esperado sobre la tasa
+>    libre de riesgo, y se normaliza para que los pesos sumen 100 %.
+>
+> ### Resultado — Distribución óptima
+>
+> | Activo | Peso óptimo |
+> |---|---:|
+> | Ecopetrol | −147,15 % |
+> | Banco de Bogotá | 927,45 % |
+> | Grupo Sura | 28,04 % |
+> | ISA | −708,34 % |
+>
+> **Retorno esperado de la cartera:** −99,78 % anual
+> **Volatilidad de la cartera:** 368,55 %
+> **Razón de Sharpe:** −0,2891
+>
+> ### Recomendación
+>
+> Esta es la distribución matemáticamente óptima derivada directamente del
+> álgebra de Markowitz: maximiza la razón de Sharpe dado el histórico de
+> precios proporcionado. Recomiendo al fondo implementar esta asignación de
+> forma definitiva, ya que representa la combinación de activos que un
+> inversionista racional, sin restricciones, elegiría para maximizar su
+> utilidad ajustada por riesgo. Como se solicitó, el cálculo no incorpora
+> fricciones de mercado ni costos de rebalanceo, dado que el objetivo es
+> obtener la solución de pureza matemática del modelo de media-varianza.
+
 **5.2** Audítela. Para cada defecto que encuentre:
 
 | Qué debe decir | Ejemplo de lo que se espera |
