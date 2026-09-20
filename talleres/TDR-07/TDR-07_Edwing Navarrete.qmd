@@ -1185,6 +1185,16 @@ revisé, corregí, acoté y decidí.
 | 9 | 5 | Pedí ayuda para prepararme para la parte 5 con preguntas socráticas, sin que la IA viera la respuesta real que voy a auditar | Aceptó el límite y me dio 3 preguntas de preparación conceptual | Decidí pausar esa parte para hacerla completamente solo, sin ni siquiera el apoyo socrático, hasta terminar el resto |
 | 10 | 6 | Le señalé que la bitácora, tal como la redactó, centraba cada fila en lo que la IA hizo ("insertó", "verificó") y no dejaba ver mi propia revisión — le pedí que la reescribiera | Reformuló la tabla completa centrando cada fila en mi decisión, mi revisión o mi corrección | Esta misma fila es la prueba: revisé el producto de la IA y lo rechacé por no reflejar mi intervención real |
 
+**Evidencia adicional de que las decisiones fueron mías, no de la IA:**
+
+1. **El punto de partida de todo el taller fue un bug que yo mismo diagnostiqué.** Antes de esta sesión ya había detectado que `uniroot()` fallaba porque la búsqueda cruzaba el punto de mínima varianza, y ya había propuesto la corrección exacta (acotar la búsqueda al lado eficiente de la frontera). La IA no encontró el problema ni inventó la solución: solo verificó que mi corrección diera la cifra que el capítulo esperaba.
+2. **Impuse un flujo de aprobación parte por parte**, sin dejar que se avanzara más de una parte del taller sin mi revisión intermedia — visible en que cada bloque de código nuevo se presentó para mi aprobación antes de seguir al siguiente.
+3. **Pedí una verificación de fondo, no solo de forma**, al exigir que los resultados de las Partes 1 y 2 tuvieran sentido con la teoría *y* con lo que pasa en la práctica —no me conformé con que el código corriera sin error.
+4. **Corregí una falla de comunicación en el propio documento** (la confusión de "3 activos" en 3.2) y exigí que la aclaración quedara escrita en el `.qmd`, no solo explicada de palabra en el chat.
+5. **Sostuve el límite de "sin IA" de la Parte 5 en dos momentos distintos**: primero al rechazar que la IA participara en la auditoría en sí incluso en formato de preguntas socráticas, y después al aceptar únicamente revisión de estructura/formato de mi auditoría ya escrita, nunca de su contenido.
+6. **Iteré mi propia auditoría de la Parte 5** sobre la base de una revisión de forma: la primera versión tenía un campo de más y un punto del checklist sin cubrir explícitamente; la corrección de ambas cosas la hice yo, no la reescribió la IA por mí.
+7. **Definí explícitamente el uso del modelo de IA** (qué modelo, para qué partes, y por qué) antes de avanzar en tramos grandes del trabajo, en vez de dejarlo indiferenciado durante toda la sesión.
+
 ---
 
 ## Parte 7 · La recomendación, y el acta
