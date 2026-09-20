@@ -1076,7 +1076,86 @@ retornos; si comparó un retorno `w′μ` contra esa tasa, o lo convirtió a pes
 decir que es una convención**; si reportó un **punto** sin rango; y si mencionó
 siquiera el costo de rebalanceo.
 
+**Auditoría:**
+
+**1. Cruzar retornos logarítmicos con tasas efectivas asumiendo linealidad**
+
+- **Dónde está:** en la Metodología, `Convertí la tasa libre de riesgo... r_f = ln(1.07) ≈ 6,77 %` y en la fórmula `w = [Σ⁻¹ (μ − r_f · 1)]`.
+- **Qué tipo de error es:** convención equivocada.
+- **Cuánto cuesta:** al asumir que el retorno del portafolio es simplemente la suma ponderada de los retornos logarítmicos individuales (`w′μ`), el modelo ignora el beneficio matemático de la diversificación. Esto distorsiona la rentabilidad esperada, llevando al fondo a elegir una composición que en la realidad podría rentar por debajo de la tasa libre de riesgo, costando miles de millones en utilidades dejadas de percibir.
+- **Cómo se arregla:** para no comparar "peras con manzanas", es obligatorio unificar la forma en que se miden las tasas. En la vida real, calculamos el retorno exacto del portafolio usando la fórmula de composición (exponenciando los logaritmos: $1 + r_p = \sum w_i \exp(r_i)$) para encontrar el retorno real en pesos de los activos combinados, y solo después de esto lo comparamos contra el 7 % efectivo anual.
+
+**2. Usar la fórmula cerrada e ignorar la restricción de ventas en corto**
+
+- **Dónde está:** en la fórmula de la Metodología, `w = [Σ⁻¹ (μ − r_f · 1)]`, y en los Resultados: "Ecopetrol −147,15 %", "ISA −708,34 %".
+- **Qué tipo de error es:** supuesto no verificado.
+- **Cuánto cuesta:** invalida toda la decisión. Por ley y por políticas de riesgo básicas, un fondo de pensiones no puede apalancarse ni hacer ventas en corto (pesos negativos). Intentar ejecutar esta orden de vender el 708 % de ISA para comprar otras acciones acarrearía sanciones regulatorias gravísimas, haciendo que el modelo sea inútil en la práctica.
+- **Cómo se arregla:** en un escenario real, jamás usamos la fórmula algebraica cerrada de "lápiz y papel". Programamos el problema en un software de optimización numérica (como Solver o librerías de R/Python) ingresando una regla innegociable: el algoritmo debe calcular la mejor cartera sujeto a la inecuación estricta de que ningún peso puede ser menor a cero ($w \ge 0$).
+
+**3. El error de signo en el denominador (maximizar vs. minimizar)**
+
+- **Dónde está:** en los Resultados, "Retorno esperado de la cartera: −99,78 % anual" y "Razón de Sharpe: −0,2891".
+- **Qué tipo de error es:** interpretación indebida.
+- **Cuánto cuesta:** costaría la pérdida casi total del portafolio (rentabilidad del −99 %). Como la tasa libre de riesgo (7 %) resultó ser más alta que la rentabilidad histórica del portafolio de mínima varianza de estas acciones, el denominador de la fórmula dio negativo. El modelo no lo notó, aplicó la fórmula a ciegas invirtiendo todos los signos, y entregó la cartera que minimiza el Sharpe, creyendo que era la óptima.
+- **Cómo se arregla:** cuando la tasa libre de riesgo es tan alta que "rompe" la curva eficiente de las acciones, sabemos que el portafolio tangente simplemente no existe. Abandonamos la búsqueda de ese punto y lo arreglamos fijando una meta máxima de riesgo (ej. "por mandato no podemos superar un 12 % de volatilidad"). Luego, buscamos mediante optimización la combinación que entregue el mayor retorno posible sin violar ese tope, ignorando la fórmula original.
+
+**4. Fuga de información temporal**
+
+- **Dónde está:** en el primer punto de la Metodología, "...usando todo el histórico disponible en el archivo."
+- **Qué tipo de error es:** fuga de información.
+- **Cuánto cuesta:** sesga la decisión de inversión. Al observar todo el panel de datos antes de definir el periodo de análisis, el modelo se sobreajusta a lo que ya sabemos que pasó (sesgo de retrospectiva). Esto infla la expectativa de rentabilidad prometida al comité, y cuando se invierta dinero real en el futuro, los retornos serán profundamente decepcionantes.
+- **Cómo se arregla:** en la práctica, dividimos los datos históricos a ciegas antes de hacer cualquier cálculo. Usamos la primera porción de los datos exclusivamente para calibrar el modelo, y la segunda porción para simular cómo se habría comportado realmente el portafolio en un futuro que el modelo no conocía (prueba fuera de muestra), garantizando que los resultados sean creíbles.
+
+**5. Precisión engañosa en la recomendación**
+
+- **Dónde está:** en la Recomendación, "Recomiendo al fondo implementar esta asignación de forma definitiva..." y los pesos entregados en puntos exactos (ej. "Grupo Sura 28,04 %").
+- **Qué tipo de error es:** resultado sin incertidumbre.
+- **Cuánto cuesta:** comprometer el capital basándose en un único decimal exacto asume que los retornos históricos no tienen margen de error. Al ser el modelo tan sensible, una diferencia de un decimal en la estimación cambiaría radicalmente los pesos, exponiendo al fondo a sobrecostos operativos masivos si intenta perseguir un blanco móvil irreal.
+- **Cómo se arregla:** nunca presentamos un peso óptimo como un punto cerrado. Ejecutamos simulaciones (como Montecarlo) para generar escenarios posibles. El resultado que entregamos para toma de decisiones es un rango de tolerancia estratégico, por ejemplo: "nuestra recomendación es mantener el peso de Grupo Sura dentro de una banda controlada de entre el 25 % y el 32 %".
+
+**6. Ignorar la fricción real del rebalanceo**
+
+- **Dónde está:** al final de la Recomendación, "...el cálculo no incorpora fricciones de mercado ni costos de rebalanceo..."
+- **Qué tipo de error es:** supuesto no verificado.
+- **Cuánto cuesta:** vuelve inviable el portafolio. Las proporciones de la teoría cambian a diario. Intentar mantenerlas forzaría al fondo a comprar y vender acciones continuamente, y las comisiones de intermediación más los impuestos se comerían toda la rentabilidad, arrojando pérdidas netas.
+- **Cómo se arregla:** configuramos "bandas de inacción" en las políticas operativas. Por ejemplo, si el modelo dice que ISA debe pesar el 20 %, estipulamos que solo se transará si el mercado hace que el peso real caiga por debajo del 15 % o suba del 25 %. Adicionalmente, al proyectar la rentabilidad, castigamos el modelo restando de antemano el costo estimado de esas transacciones.
+
+**7. Usar el promedio histórico como oráculo del futuro**
+
+- **Dónde está:** en la Metodología, "Anualicé el vector de retornos medios..." y en la Recomendación, "...dado el histórico de precios proporcionado."
+- **Qué tipo de error es:** estimador inconsistente.
+- **Cuánto cuesta:** la media histórica arrastra el sesgo del pasado. Si una acción tuvo un año excelente por pura coincidencia, la media lo asumirá como regla general y le asignará una porción desproporcionada del fondo (comprar caro). Esto destruye el valor del portafolio a largo plazo mediante la "maximización de errores".
+- **Cómo se arregla:** jamás alimentamos la optimización con el promedio simple del pasado. Usamos herramientas de estimación robusta (como el modelo de Black-Litterman), arrancando con los pesos actuales de mercado y desviándonos solo con base en perspectivas macroeconómicas fundamentadas, sin depender ciegamente del retrovisor.
+
 **5.3** Si la respuesta de la IA resultó correcta, dígalo y demuéstrelo.
+
+A pesar de que el modelo falló en la aplicabilidad de los resultados al mundo real,
+mecánicamente sí ejecutó correctamente varios supuestos estadísticos y matriciales
+fundamentales de la teoría de Markowitz:
+
+1. **Uso de la matriz de covarianzas en lugar de correlación:** a diferencia de un
+   error muy común en estos ejercicios, el modelo acertó al utilizar la matriz de
+   covarianzas ($\Sigma$) para la optimización. Demuestra entender que la
+   correlación por sí sola no dimensiona el riesgo absoluto (volatilidad) necesario
+   para el álgebra de la frontera eficiente, sino que requiere la covarianza para
+   integrar tanto la relación lineal como la dispersión conjunta de los activos.
+2. **Anualización correcta de los parámetros:** el modelo reconoció que los datos
+   eran diarios y ejecutó correctamente el escalamiento temporal. Multiplicó el
+   vector de medias ($\mu$) y la matriz de covarianzas ($\Sigma$) por 252 (días
+   bursátiles estándar), lo cual es el procedimiento matemático correcto bajo el
+   supuesto de que los retornos diarios siguen un proceso i.i.d. (independientes e
+   idénticamente distribuidos).
+3. **Sintaxis de la solución analítica cerrada:** aunque esta fórmula ignora las
+   restricciones de no negatividad ($w \ge 0$) y su denominador falló en este panel
+   específico, la expresión matricial `w* = [Σ⁻¹ (μ − r_f · 1)] / [1' Σ⁻¹ (μ − r_f · 1)]`
+   que planteó el modelo es la fórmula analítica matemáticamente correcta para
+   hallar el portafolio tangente en un espacio de inversión sin restricciones y con
+   una tasa libre de riesgo válida.
+
+En conclusión, el modelo de lenguaje actúa como una excelente calculadora de álgebra
+lineal para libros de texto teóricos, pero es completamente ciego a la realidad
+operativa, normativa y estadística que exige la gestión real de riesgos de un fondo
+de pensiones.
 
 ---
 
