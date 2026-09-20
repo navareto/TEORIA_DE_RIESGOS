@@ -107,7 +107,39 @@ de riesgo o se convierta a pesos, aparezcan las dos**.
 
 ## Parte 1 · Reproducir el capítulo
 
-Ventana de estimación: panel completo (1.917 observaciones, todo el histórico disponible). Convención de retornos: logarítmicos diarios, anualizados ×252. Restricciones: sin ventas en corto (w ≥ 0), pesos suman 1. Periodicidad de reestimación: no aplica en esta parte (cartera estática); se define en la Parte 4.
+**Declaración previa (antes de correr nada).** Ventana de estimación: panel
+completo, 1.917 observaciones de precio —1.916 retornos—, todo el histórico
+disponible. Convención de retornos: logarítmicos diarios,
+$r_t = \ln(P_t / P_{t-1})$, anualizados $\times 252$.
+Restricciones: sin ventas en corto, $w \ge 0$, y presupuesto completo,
+$w'\mathbf{1} = 1$. Periodicidad de reestimación: no aplica en esta parte, que
+trabaja una cartera estática; se declara en la Parte 4.
+
+::: {.callout-note collapse="true"}
+## Notación usada en todo el documento
+
+Con $w$ el vector de pesos, $\mu$ el de retornos esperados anualizados y
+$\Sigma$ la matriz de covarianzas anualizada:
+
+- **Retorno en la convención del capítulo** (la que el taller llama $w'\mu$):
+  $$\mu_p = w'\mu$$
+- **Retorno real** de la cartera rebalanceada a diario, que es el único
+  comparable contra el TES o convertible a pesos:
+  $$r_p = 252 \cdot \overline{\ln\!\big(1 + (e^{r} - 1)\,w\big)}$$
+- **Volatilidad anual:** $\sigma_p = \sqrt{w'\Sigma w}$
+- **Frontera eficiente sin cortos**, para un retorno objetivo $\mu_0$:
+  $$\min_{w}\; w'\Sigma w \quad \text{s.a.}\quad w'\mu = \mu_0,\quad w'\mathbf{1} = 1,\quad w \ge 0$$
+- **Mínima varianza:** el mismo problema sin la restricción de retorno objetivo.
+- **Cartera tangente sin cortos**, por el cambio de variable del capítulo:
+  $$\min_{y}\; y'\Sigma y \quad \text{s.a.}\quad (\mu - r_f\mathbf{1})'y = 1,\quad y \ge 0, \qquad w = \frac{y}{\mathbf{1}'y}$$
+- **Razón de Sharpe:** $S = (\mu_p - r_f)/\sigma_p$, con $r_f = \ln(1{,}07)$.
+- **Conversión de una brecha de retorno a pesos:** componiendo,
+  $W(e^{r_1} - e^{r_2})$, nunca multiplicando puntos logarítmicos por el fondo.
+
+Las fórmulas que aparecen en formato de código dentro de las partes 5.1 y 5.2
+se dejan deliberadamente sin tipografiar: son cita textual de la respuesta que
+se audita, y el enunciado exige pegarla sin editar.
+:::
 
 ```{r}
 #| label: parte1-carga
@@ -156,6 +188,20 @@ mean(cor(r)[upper.tri(cor(r))])
 **7,69 %** con una volatilidad del **25,02 %**, y la de mínima varianza mueve
 **23,93 %** con pesos **20,76 · 38,13 · 15,97 · 25,14**. Reporte además las seis
 correlaciones de pares y su promedio, que debe ser **0,227**.
+
+Reproducido exacto: la declarada rinde **7,69 %** en la convención $w'\mu$ (y
+11,83 % real) con volatilidad **25,02 %**, y la de mínima varianza queda en
+**20,76 · 38,13 · 15,97 · 25,14** con **23,93 %** de volatilidad. Las seis
+correlaciones de pares son Ecopetrol-Bogotá **0,1821**, Ecopetrol-Sura
+**0,2547**, Ecopetrol-ISA **0,2999**, Bogotá-Sura **0,1996**, Bogotá-ISA
+**0,1975** y Sura-ISA **0,2268**, con promedio **0,2268 ≈ 0,227**.
+
+Vale la pena anotar lo que esas seis cifras significan antes de seguir: todas
+son positivas y todas moderadas (entre 0,18 y 0,30). Positivas porque los cuatro
+emisores comparten el mismo mercado, la misma moneda y el mismo ciclo local;
+moderadas porque son negocios distintos. Es justo el rango donde la
+diversificación todavía sirve —la mínima varianza baja a 23,93 % frente a
+volatilidades individuales de entre 33 % y 43 %— pero no obra milagros.
 
 ```{r}
 #| label: parte1-brechas
@@ -209,6 +255,38 @@ queda entre un 8 % y un 12 % corto. Y antes de convertirla hay que medirla sin l
 convención, porque los 0,74 pp son cifra de `w′μ`: con los dos retornos de verdad son
 **0,47 pp**, que compuestos dan **4 232 millones** al año. Reporte las tres cifras
 —4 960, 0,47 pp y 4 232— y diga cuál de ellas es la que puede ir a un acta de comité.
+
+**Las tres cifras.** Al mismo retorno que la declarada, la frontera exige
+**24,40 %** de volatilidad, **0,62 pp** menos que el 25,02 % actual, que sobre
+los 800.000 millones del fondo son **4.960 millones** de desviación típica anual.
+Al mismo riesgo, la frontera ofrece **8,43 %** de retorno en la convención
+$w'\mu$, **0,74 pp** más; pero medida sin la convención, con los dos retornos de
+verdad, la brecha es **0,47 pp**, que compuesta sobre el fondo
+—$W\,(e^{r_1} - e^{r_2})$, no multiplicando— da **4.232 millones** al año.
+
+**Nota sobre el redondeo, que conviene declarar.** Mis cálculos sin redondear dan
+0,6244 pp y 0,4700 pp, que convertidos exactamente serían 4.995 y 4.242 millones.
+Las cifras de 4.960 y 4.232 salen de convertir los puntos porcentuales ya
+redondeados a dos decimales (0,62 y 0,47), que es como los reporta el capítulo.
+Reporto las dos versiones porque la diferencia —35 millones en un caso, 10 en el
+otro— no cambia ninguna conclusión, pero callarla sí contradiría la tesis de
+este taller.
+
+**Cuál va al acta: los 4.232 millones.** Es la única de las tres que representa
+plata que el fondo efectivamente recibiría, medida además sin la convención. Los
+4.960 millones **no son plata**: son una desviación típica, una medida de cuánto
+oscila el valor del fondo, y llevarla a un acta como si fuera un resultado
+anual sería confundir la dispersión con el rendimiento. Y los 0,74 pp quedan
+fuera por partida doble: son cifra de $w'\mu$ y, si alguien los multiplicara por
+el fondo en vez de componerlos, se quedaría además entre un 8 % y un 12 % corto.
+
+**Por qué las dos brechas no son la misma cosa medida dos veces.** Porque miden
+dos movimientos distintos desde el mismo punto: uno horizontal —conservar el
+retorno y recortar el riesgo— y otro vertical —conservar el riesgo y subir el
+retorno—. Son dos proyecciones de la misma distancia a la frontera sobre ejes
+que no son intercambiables: uno está en unidades de dispersión y el otro en
+unidades de rentabilidad. Sumarlas, o presentarlas como si una confirmara a la
+otra, sería tratar una desviación típica como si fuera un flujo de caja.
 
 ```{r}
 #| label: parte1-frontera-datos
@@ -367,11 +445,11 @@ retorno, y póngalos al lado de los del panel completo. Diga cuál es la diferen
 mayor, en puntos porcentuales y en millones.
 
 Con la ventana propia (750 ruedas, tope 35 %) la mínima varianza queda
-**22,65 · 35,00 · 15,59 · 26,76**, con volatilidad **22,69 %** y retorno `w′μ`
+**22,65 · 35,00 · 15,59 · 26,76**, con volatilidad **22,69 %** y retorno $w'\mu$
 **16,08 %** (real 19,98 %) — muy distinta de la del panel completo
-(20,76 · 38,13 · 15,97 · 25,14, vol 23,93 %, `w′μ` 6,32 %). La diferencia mayor es
+(20,76 · 38,13 · 15,97 · 25,14, vol 23,93 %, $w'\mu$ 6,32 %). La diferencia mayor es
 en **Banco de Bogotá: 3,13 pp**, equivalentes a **25 020 millones** sobre el
-fondo. El retorno `w′μ` casi se triplica frente al panel completo, pero eso es
+fondo. El retorno $w'\mu$ casi se triplica frente al panel completo, pero eso es
 enteramente el reflejo de que las últimas 750 ruedas tuvieron retornos medios
 excepcionalmente altos — no una mejora estructural del activo, que es justo el
 tipo de artefacto de ventana que la parte 4 va a medir con números.
@@ -406,7 +484,7 @@ una restricción mejore una medida y empeore la otra.
 
 Con mi ventana y mi tope (35 %) el costo es prácticamente nulo: la volatilidad
 no se mueve en la cuarta cifra decimal (22,6946 % con y sin tope) y el Sharpe
-(`w′μ`, con rf = 6,7659 %) cae de **0,4107 sin tope** a **0,4104 con tope** — apenas
+($w'\mu$, con rf = 6,7659 %) cae de **0,4107 sin tope** a **0,4104 con tope** — apenas
 0,0003. Esto **no** contradice el ejemplo del panel completo: allí el tope del
 30 % sí recorta una posición grande (Grupo Sura queda forzado lejos de su óptimo
 sin restricción) y por eso sube la volatilidad *y* el Sharpe a la vez —una
@@ -472,11 +550,11 @@ difiere de lo que recomienda el capítulo?
 
 Las dos curvas casi no se tocan: la frontera de mi ventana vive en una franja de
 volatilidad muy parecida (22,7 %–25,9 % contra 23,9 %–36,6 % del panel completo)
-pero a un nivel de retorno `w′μ` muchísimo más alto (12,6 %–17,9 % contra
+pero a un nivel de retorno $w'\mu$ muchísimo más alto (12,6 %–17,9 % contra
 0,3 %–12,9 %). Si el comité hubiera aprobado mi ventana de 750 ruedas en vez del
 panel completo, le habría recomendado la misma familia de cartera de mínima
 varianza pero con un retorno esperado **cerca de 10 puntos porcentuales mayor**
-(16,08 % contra 6,32 % en `w′μ`) al mismo nivel de riesgo aproximado —una
+(16,08 % contra 6,32 % en $w'\mu$) al mismo nivel de riesgo aproximado —una
 recomendación que se ve mucho mejor en el papel y que es enteramente producto de
 haber cortado el panel justo donde el mercado venía subiendo. Es la advertencia
 de la parte 1.2 de este taller repetida con otro nombre: la ventana que se elige
@@ -526,7 +604,15 @@ Debe obtener **5,52 · 0 · 0 · 94,48** con retorno **12,67 %**, volatilidad
 **35,28 %** y razón de Sharpe **0,1673**. Reporte también las razones de Sharpe de
 los cuatro emisores por separado.
 
-Confirmado: **5,52 · 0 · 0 · 94,48**, retorno `w′μ` **12,67 %** (real 13,18 %),
+El problema resuelto, escrito con la notación declarada al inicio, es
+
+$$\min_{y}\; y'\Sigma y \quad \text{sujeto a}\quad (\mu - r_f\mathbf{1})'y = 1,\quad y \ge 0,
+\qquad w = \frac{y}{\mathbf{1}'y}$$
+
+y la razón de usar esta vía —y no la fórmula cerrada— queda demostrada en 7.1: el
+denominador de la solución analítica es negativo en este panel.
+
+Confirmado: **5,52 · 0 · 0 · 94,48**, retorno $w'\mu$ **12,67 %** (real 13,18 %),
 volatilidad **35,28 %**, Sharpe **0,1673**. Las razones de Sharpe individuales
 —Ecopetrol 0,0593, Bogotá −0,1948, Grupo Sura ≈0,0000, ISA 0,1670— explican de
 inmediato la composición: la tangente sin cortos solo puede tomar posiciones
@@ -558,7 +644,7 @@ negativo, pero esa cartera rindió **10,22 %** de verdad contra el 6,7659 % del 
 y su razón real es **+0,1445**. Produzca las dos columnas y diga qué parte del
 reproche a la mínima varianza sobrevive a la corrección, porque algo sobrevive.
 
-Confirmado: **−0,0188** con `w′μ` y **+0,1445** con el retorno real. Lo que
+Confirmado: **−0,0188** con $w'\mu$ y **+0,1445** con el retorno real. Lo que
 sobrevive a la corrección no es "la mínima varianza pierde contra el TES" —eso
 era enteramente un artefacto de la convención—, sino algo más modesto: su Sharpe
 real (0,1445) sigue siendo el más bajo entre las carteras de referencia del
@@ -682,7 +768,7 @@ llevaría al comité y por qué la otra no.
 Confirmado exactamente: **12,60 %** contra **11,83 %** reales, **0,77 pp**,
 **6 990 millones** al año compuestos. Es la cifra de **0,77 pp / 6 990 millones**
 la que se lleva a un comité, no los 3,26 pp: esa última es una comparación entre
-dos números `w′μ` que nunca fueron el retorno de ninguna cartera —ni de la
+dos números $w'\mu$ que nunca fueron el retorno de ninguna cartera —ni de la
 declarada ni de la mezcla tangente-TES—, así que presentarla sin decir que es
 convención es prometer una ganancia 4 veces mayor a la que el fondo efectivamente
 recibiría el día que compare la plata real contra el TES real.
@@ -779,6 +865,17 @@ plot_ly() |>
 21 ruedas** sobre las últimas 1 000 y guarde la serie de pesos. Grafíquela como
 área apilada.
 
+Son **48 puntos de rebalanceo** y el área apilada muestra algo que ninguna tabla
+de pesos estáticos deja ver: la composición "óptima" no se desplaza suavemente,
+salta. Banco de Bogotá arranca la serie en **58,17 %** y en el sexto rebalanceo
+ya está en **25,76 %** —32 pp en cinco reestimaciones—; Ecopetrol hace el
+movimiento contrario, del 18,06 % al 35,38 % en el mismo tramo. Y esto es la
+cartera de **mínima varianza**, la única
+que ni siquiera depende de μ: si la parte del problema que se estima mejor
+produce estos saltos, cualquier punto de la frontera que además dependa del
+retorno esperado se moverá más. Esa es la lectura que justifica medir el
+turnover en 4.2 en vez de suponer que reestimar es gratis.
+
 ```{r}
 #| label: parte4-turnover
 turnovers <- sapply(2:nrow(pesos_roll), function(k) {
@@ -822,15 +919,26 @@ convención son **0,47 pp**, y compuestos sobre el fondo, **4 232 millones** al 
 Responda con las dos cifras juntas: ¿sobrevive la ganancia al costo de perseguirla?
 
 Con 20 pb sobre lo que se mueve, perseguir la frontera cuesta **≈902 millones**
-al año; lo que la frontera prometía en 1.2 son **4 242 millones** al año (los
-0,47 pp compuestos). La ganancia **sí sobrevive** al costo, y con margen amplio:
-el costo se lleva menos de una cuarta parte de la promesa (902 / 4.242 ≈ 21 %).
+al año; lo que la frontera prometía en 1.2 son **4.232 millones** al año (los
+0,47 pp compuestos; 4.242 con los decimales sin redondear, según la nota de
+1.2). La ganancia **sí sobrevive** al costo, y con margen amplio: el costo se
+lleva poco más de una quinta parte de la promesa (902 / 4.232 ≈ 21 %).
+
+Dos precisiones sobre de dónde sale el 902, porque el propio taller castiga
+reportar una cifra sin su procedencia. Primera: es el costo **efectivamente
+incurrido** en los 47 rebalanceos simulados, dividido entre los 3,97 años que
+cubren las 1.000 ruedas —no el turnover anualizado teórico multiplicado por el
+costo, que daría 914 millones—. La diferencia es que en 3,97 años caben 47
+rebalanceos de 21 ruedas, es decir 11,8 al año y no los 12 exactos que supone la
+anualización. Segunda: los 20 pb se aplican sobre el turnover de una vía (la
+mitad de la suma de cambios absolutos), que es la convención con la que el
+propio enunciado define la rotación.
 
 Y añada una línea sobre de qué lado está el sesgo de esa comparación: los 0,47 pp
 están medidos sobre la misma muestra con la que se estimó la frontera, y el costo de
 rebalanceo no.
 
-El sesgo favorece a la frontera: los 4.242 millones se calculan con μ y Σ
+El sesgo favorece a la frontera: los 4.232 millones se calculan con μ y Σ
 estimados sobre **todo** el panel, incluido el propio período que se está
 "prometiendo" batir —es una comparación dentro de muestra, optimista por
 construcción—, mientras que los 902 millones de costo salen de una simulación
@@ -1224,7 +1332,7 @@ ajuste antes de continuar. Ninguna parte avanzó sin que yo la cerrara primero.
 4. **Corregí una falla de comunicación en el propio documento** (la confusión de "3 activos" en 3.2) y exigí que la aclaración quedara escrita en el `.qmd`, no solo explicada de palabra en el chat.
 5. **Sostuve el límite de "sin IA" de la Parte 5 en dos momentos distintos**: primero al rechazar que la IA participara en la auditoría en sí incluso en formato de preguntas socráticas, y después al aceptar únicamente revisión de estructura/formato de mi auditoría ya escrita, nunca de su contenido.
 6. **Iteré mi propia auditoría de la Parte 5** sobre la base de una revisión de forma: la primera versión tenía un campo de más y un punto del checklist sin cubrir explícitamente; la corrección de ambas cosas la hice yo, no la reescribió la IA por mí.
-7. **Rechacé la recomendación que el propio marco teórico sugería.** En la Parte 7, lo esperable era recomendar mínima varianza. Al mirar los Sharpe con retornos reales —no con la convención `w′μ`— resultó que esa cartera es peor que la que el fondo ya tiene, y cambié la recomendación por el punto que sí la domina. Esa decisión exigió entender la diferencia entre las dos convenciones, que es justo lo que el taller advierte desde la primera página.
+7. **Rechacé la recomendación que el propio marco teórico sugería.** En la Parte 7, lo esperable era recomendar mínima varianza. Al mirar los Sharpe con retornos reales —no con la convención $w'\mu$— resultó que esa cartera es peor que la que el fondo ya tiene, y cambié la recomendación por el punto que sí la domina. Esa decisión exigió entender la diferencia entre las dos convenciones, que es justo lo que el taller advierte desde la primera página.
 8. **Investigué un aviso técnico en vez de ignorarlo.** El bloque de 7.1 arrojaba un `NaN` fácil de descartar como ruido; al perseguirlo apareció que la cartera sin restricciones quiebra al fondo en 3 de 1.916 ruedas, y ese hallazgo terminó siendo el argumento central de la respuesta.
 
 ---
@@ -1271,14 +1379,14 @@ Sharpe sin restricciones —debe salir **−147,15 · 927,45 · 28,04 · −708,
 Sharpe **−0,2891**—, solo sin cortos y con tope del 30 %. Explique en dos líneas
 por qué la primera fila es un monstruo y no un error de cálculo.
 
-| Régimen | Ecopetrol | Bogotá | Gr. Sura | ISA | `w′μ` | real | vol | Sharpe |
+| Régimen | Ecopetrol | Bogotá | Gr. Sura | ISA | $w'\mu$ | real | vol | Sharpe |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | Sin restricciones | −147,15 | 927,45 | 28,04 | −708,34 | −99,78 % | — | 368,55 % | −0,2891 |
 | Solo sin cortos | 5,52 | 0,00 | 0,00 | 94,48 | 12,67 % | 13,18 % | 35,28 % | 0,1673 |
 | Tope del 30 % | 30,00 | 10,00 | 30,00 | 30,00 | 8,64 % | 12,70 % | 26,26 % | 0,0714 |
 
 La primera fila es un monstruo porque el denominador de la fórmula cerrada,
-`1′Σ⁻¹(μ−rf)`, vale **−0,0784** en este panel: es negativo porque ninguna
+$\mathbf{1}'\Sigma^{-1}(\mu - r_f\mathbf{1})$, vale **−0,0784** en este panel: es negativo porque ninguna
 combinación de estas cuatro acciones supera de forma consistente al TES, y al
 normalizar dividiendo por un número negativo **se invierten todos los signos**,
 de modo que la fórmula devuelve la cartera que *minimiza* el Sharpe creyendo que
@@ -1360,7 +1468,7 @@ mejor que el **0,1809** de la mínima varianza con el mismo tope. Recomendar
 mínima varianza sería pedirle al comité que renuncie a **0,70 pp** de retorno
 real *y* que empeore su relación riesgo-retorno, a cambio de 0,90 pp menos de
 volatilidad —un mal negocio que solo se ve bien si uno se queda en la convención
-`w′μ`—. El punto que sí domina a la declarada es el de la parte 1.2 hecho
+$w'\mu$—. El punto que sí domina a la declarada es el de la parte 1.2 hecho
 ejecutable: el de la frontera que tiene **exactamente su misma volatilidad**
 (25,02 %) y **0,32 pp más de retorno real** (12,14 % contra 11,83 %), o sea
 **2.846 millones al año**, por un costo de transición único de **80 millones**
@@ -1434,7 +1542,7 @@ recupera en aproximadamente **diez días**.
   vender en corto el 708 % de otro. Es ilegal para un fondo de pensiones e
   imposible de ejecutar; se descarta de entrada.
 - *Perseguir el óptimo reestimándolo cada mes:* el fondo terminaría rotando el
-  57 % de la cartera al año, con un costo de transacción de **914 millones
+  57 % de la cartera al año, con un costo de transacción de **902 millones
   anuales** que se come buena parte de la ganancia.
 
 **La advertencia que el comité debe oír.** Estos números salen del
