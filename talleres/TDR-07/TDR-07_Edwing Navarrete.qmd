@@ -1199,16 +1199,163 @@ revisé, corregí, acoté y decidí.
 
 ## Parte 7 · La recomendación, y el acta
 
+```{r}
+#| label: parte7-regimenes
+# Regimen 1: formula cerrada, sin ninguna restriccion (ni cortos ni tope)
+z       <- solve(S) %*% (mu - rf)
+w_libre <- as.numeric(z / sum(z))
+
+# Regimen 2: solo sin cortos (la tangente de 3.1)
+w_sincortos <- tangente()
+
+# Regimen 3: sin cortos y con tope del 30% por emisor
+w_tope30 <- tangente(tope = 0.30)
+
+regimen <- function(w) c(w * 100, conv = ret_conv(w) * 100,
+                         vol = vol(w) * 100, sharpe = (ret_conv(w) - rf) / vol(w))
+round(rbind(sin_restricciones = regimen(w_libre),
+            solo_sin_cortos   = regimen(w_sincortos),
+            tope_30           = regimen(w_tope30)), 4)
+
+# El retorno REAL solo esta definido para las dos carteras ejecutables: la del
+# primer regimen tiene dias con perdida superior al 100% del capital, y el
+# logaritmo de un patrimonio negativo no existe.
+round(c(real_sin_cortos = ret_real(w_sincortos) * 100,
+        real_tope30     = ret_real(w_tope30) * 100), 4)
+
+# El denominador de la formula cerrada, que es lo que explica la primera fila
+round(c(denominador = sum(z)), 4)
+
+# Por que la primera fila no es solo "fea": cuantas veces habria quebrado el fondo
+simple_libre <- as.numeric((exp(r) - 1) %*% w_libre)
+round(c(apalancamiento_bruto_pct = sum(abs(w_libre)) * 100,
+        dias_de_ruina            = sum(simple_libre <= -1),
+        ruedas_totales           = length(simple_libre),
+        peor_dia_pct             = min(simple_libre) * 100), 2)
+```
+
 **7.1** Reproduzca la tabla de los tres regímenes del capítulo: máxima razón de
 Sharpe sin restricciones —debe salir **−147,15 · 927,45 · 28,04 · −708,34** con
 Sharpe **−0,2891**—, solo sin cortos y con tope del 30 %. Explique en dos líneas
 por qué la primera fila es un monstruo y no un error de cálculo.
+
+| Régimen | Ecopetrol | Bogotá | Gr. Sura | ISA | `w′μ` | real | vol | Sharpe |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Sin restricciones | −147,15 | 927,45 | 28,04 | −708,34 | −99,78 % | — | 368,55 % | −0,2891 |
+| Solo sin cortos | 5,52 | 0,00 | 0,00 | 94,48 | 12,67 % | 13,18 % | 35,28 % | 0,1673 |
+| Tope del 30 % | 30,00 | 10,00 | 30,00 | 30,00 | 8,64 % | 12,70 % | 26,26 % | 0,0714 |
+
+La primera fila es un monstruo porque el denominador de la fórmula cerrada,
+`1′Σ⁻¹(μ−rf)`, vale **−0,0784** en este panel: es negativo porque ninguna
+combinación de estas cuatro acciones supera de forma consistente al TES, y al
+normalizar dividiendo por un número negativo **se invierten todos los signos**,
+de modo que la fórmula devuelve la cartera que *minimiza* el Sharpe creyendo que
+lo maximiza. El álgebra está impecablemente ejecutada; lo que falla es el
+supuesto de que existe una tangente —cuando no lo hay, la fórmula sigue teniendo
+solución numérica pero deja de tener sentido económico.
+
+Y hay una cifra que cierra la discusión mejor que el Sharpe negativo: esa cartera
+tiene un **apalancamiento bruto del 1.811 %** —dieciocho veces el patrimonio— y en
+**3 de las 1.916 ruedas del panel habría perdido más del 100 % del capital del
+fondo**, la peor un **−241,7 %** el 31 de marzo de 2022. Por eso su retorno real
+no aparece en la tabla: no está indefinido por un descuido de cálculo, sino
+porque el patrimonio se vuelve negativo y el logaritmo de un fondo quebrado no
+existe. La primera fila no es una cartera agresiva; es una que liquida al fondo
+tres veces en ocho años.
+
+```{r}
+#| label: parte7-recomendacion
+# Punto de la frontera que iguala la volatilidad de la cartera declarada, con el
+# tope del 30% puesto. Si el objetivo de volatilidad cae fuera del rango
+# alcanzable con tope, se devuelve el extremo correspondiente.
+punto_mismo_riesgo <- function(Sig, med, tope, objetivo_vol) {
+  rg   <- rango_factible(med, tope)
+  wmin <- frontera_tope(tope, Sig, med)
+  wmax <- frontera_tope(tope, Sig, med, rg[2] - 1e-9)
+  if (objetivo_vol <= vol(wmin, Sig)) return(wmin)
+  if (objetivo_vol >= vol(wmax, Sig)) return(wmax)
+  f <- function(m) vol(frontera_tope(tope, Sig, med, m), Sig) - objetivo_vol
+  frontera_tope(tope, Sig, med, uniroot(f, c(sum(wmin * med) + 1e-9, rg[2] - 1e-9))$root)
+}
+
+w_rec <- punto_mismo_riesgo(S, mu, 0.30, vol(w0))
+w_mv30 <- frontera_tope(0.30, S, mu)   # minima varianza con el mismo tope, para comparar
+
+comparar <- function(w) c(w * 100, vol = vol(w) * 100, conv = ret_conv(w) * 100,
+                          real = ret_real(w) * 100, sharpe_real = (ret_real(w) - rf) / vol(w))
+round(rbind(declarada       = comparar(w0),
+            minvar_tope30   = comparar(w_mv30),
+            recomendada     = comparar(w_rec),
+            max_sharpe_t30  = comparar(w_tope30)), 4)
+
+turnover_transicion <- 0.5 * sum(abs(w_rec - w0))
+round(c(ganancia_pp        = (ret_real(w_rec) - ret_real(w0)) * 100,
+        ganancia_millones  = W * (exp(ret_real(w_rec)) - exp(ret_real(w0))),
+        cambio_vol_pp      = (vol(w_rec) - vol(w0)) * 100,
+        turnover_pct       = turnover_transicion * 100,
+        costo_unico_millones = turnover_transicion * 0.0020 * W), 2)
+```
+
+```{r}
+#| label: parte7-banda
+# Banda de incertidumbre: el MISMO criterio reestimado en las 48 ventanas
+# rodantes de 250 ruedas de la parte 4.
+pesos_criterio <- t(sapply(idx_rebal, function(i) {
+  win <- r[(i - ventana_roll + 1):i, ]
+  punto_mismo_riesgo(cov(win) * 252, colMeans(win) * 252, 0.30, vol(w0))
+}))
+colnames(pesos_criterio) <- acciones
+
+round(rbind(min      = apply(pesos_criterio, 2, min) * 100,
+            mediana  = apply(pesos_criterio, 2, median) * 100,
+            max      = apply(pesos_criterio, 2, max) * 100,
+            amplitud_pp = (apply(pesos_criterio, 2, max) - apply(pesos_criterio, 2, min)) * 100), 1)
+round((apply(pesos_criterio, 2, max) - apply(pesos_criterio, 2, min)) * W, 0)
+```
 
 **7.2** Escoja **un punto** de la frontera para recomendárselo al fondo y
 justifíquelo con tres cosas: el criterio (mínima varianza, retorno objetivo,
 máximo Sharpe con tope, u otro), la restricción que lo hace ejecutable, y la
 banda de incertidumbre que le pone la parte 2 o la parte 4. Una recomendación sin
 las tres no se califica.
+
+**El punto: 30,00 · 18,74 · 21,26 · 30,00.**
+
+**(i) El criterio: retorno objetivo a riesgo constante**, no mínima varianza. La
+razón está en la tabla de arriba y es incómoda para la respuesta fácil: medida
+con los retornos reales, la cartera **declarada ya tiene un Sharpe de 0,2023**,
+mejor que el **0,1809** de la mínima varianza con el mismo tope. Recomendar
+mínima varianza sería pedirle al comité que renuncie a **0,70 pp** de retorno
+real *y* que empeore su relación riesgo-retorno, a cambio de 0,90 pp menos de
+volatilidad —un mal negocio que solo se ve bien si uno se queda en la convención
+`w′μ`—. El punto que sí domina a la declarada es el de la parte 1.2 hecho
+ejecutable: el de la frontera que tiene **exactamente su misma volatilidad**
+(25,02 %) y **0,32 pp más de retorno real** (12,14 % contra 11,83 %), o sea
+**2.846 millones al año**, por un costo de transición único de **80 millones**
+(turnover del 5 %, a 20 pb) que se recupera en unos diez días. Es, además, el
+único cambio que no obliga al comité a pronunciarse sobre su apetito de riesgo:
+el riesgo queda igual y solo se mueve el retorno.
+
+**(ii) La restricción que lo hace ejecutable: el tope del 30 % por emisor.** Sin
+él, el óptimo matemático de la primera fila de 7.1 pide **927 % en Bogotá** y
+**−708 % en ISA**: apalancamiento y ventas en corto que el régimen de inversión
+de un fondo de pensiones prohíbe. Con el tope, ninguna posición supera el 30 % y
+la cartera es ejecutable tal como está escrita.
+
+**(iii) La banda de incertidumbre (parte 4): amplísima, y por eso la
+recomendación es una política, no un punto.** Reestimando *el mismo criterio* en
+las 48 ventanas rodantes de 250 ruedas, cada uno de los cuatro emisores recorre
+**los 20 pp completos** entre el piso estructural (10 %, que es lo que queda
+cuando los otros tres topan) y el tope (30 %). En pesos, eso es una banda de
+**160.000 millones por emisor**. Un punto cuyo óptimo recorre todo el espacio
+factible según la ventana que se le dé **no se persigue**: se fija una vez y se
+gobierna con bandas de no-acción, que es exactamente lo que propone la nota de
+7.3.
+
+Y una honestidad que corresponde dejar escrita: los 12,14 % de retorno real del
+punto recomendado están medidos **dentro de la misma muestra** con la que se
+estimaron μ y Σ. La parte 4.3 ya advirtió de qué lado está ese sesgo. Los 2.846
+millones son la cota superior de la ganancia, no una promesa.
 
 **7.3** El comité de riesgos le pidió una nota de **una página**, sin fórmulas y
 sin código, que responda a *«¿cambiamos los pesos del fondo?»*. Debe contener la
@@ -1220,6 +1367,94 @@ compromiso con fecha adquiere el área.
 Si la nota necesita la palabra «semidefinida» para entenderse, todavía no está
 terminada.
 
+::: {.callout-note appearance="simple"}
+## Nota al Comité de Riesgos · ¿Cambiamos los pesos del fondo?
+
+**Sí, con un ajuste acotado: pasar de 30/20/25/25 a 30/19/21/30 entre Ecopetrol,
+Banco de Bogotá, Grupo Sura e ISA.** No es un cambio de estrategia ni un aumento
+de la exposición al riesgo; es corregir una asignación que hoy deja rentabilidad
+sobre la mesa sin recibir nada a cambio.
+
+**La evidencia, en plata.** Con el ajuste, el fondo queda expuesto **exactamente
+al mismo riesgo que hoy**: la oscilación anual esperada de la cartera se mantiene
+en el 25,0 %, ni un punto más. Lo que cambia es el rendimiento: de 11,8 % a
+12,1 % anual, unos **2.846 millones de pesos más al año** sobre los 800.000
+millones del fondo. Dicho de otro modo: hoy el fondo asume un nivel de riesgo por
+el que el mercado paga un poco más de lo que estamos cobrando, y el ajuste cobra
+esa diferencia sin pedirle al comité que tolere más volatilidad.
+
+**Lo que cuesta ejecutarlo.** Mover los pesos implica transar el 5 % de la
+cartera. A 20 puntos básicos de costo sobre lo que se mueve, son **80 millones
+de pesos, una sola vez**. Con una ganancia de 2.846 millones al año, el costo se
+recupera en aproximadamente **diez días**.
+
+**Qué se pierde con cada alternativa.**
+
+- *No hacer nada:* se conserva una cartera que no es mala —de hecho su relación
+  rentabilidad-riesgo es razonable—, pero se renuncia a los 2.846 millones
+  anuales que están disponibles sin asumir más riesgo.
+- *Ir a la cartera "más segura" (mínima varianza):* baja la oscilación anual del
+  25,0 % al 24,1 %, pero cuesta 0,7 puntos de rentabilidad —unos 6.300 millones
+  al año— y **empeora** la relación entre lo que se gana y el riesgo que se
+  corre. Es pagar de más por una reducción de riesgo pequeña.
+- *Ir a la cartera "matemáticamente óptima" sin restricciones:* el modelo, sin
+  límites de concentración, pide poner el 927 % del fondo en un solo emisor y
+  vender en corto el 708 % de otro. Es ilegal para un fondo de pensiones e
+  imposible de ejecutar; se descarta de entrada.
+- *Perseguir el óptimo reestimándolo cada mes:* el fondo terminaría rotando el
+  57 % de la cartera al año, con un costo de transacción de **914 millones
+  anuales** que se come buena parte de la ganancia.
+
+**La advertencia que el comité debe oír.** Estos números salen del
+comportamiento pasado de las cuatro acciones. Cuando cambiamos el período que se
+mira, la cartera "óptima" cambia mucho: en las 48 revisiones que simulamos, el
+peso ideal de cada emisor se movió entre el 10 % y el 30 % —una franja de
+160.000 millones por emisor—. Por eso la recomendación **no** es fijar estos
+pesos y defenderlos al decimal, sino moverse a ellos y gobernarlos con bandas.
+
+**Compromisos que adquiere el área, con fecha.**
+
+1. **Ejecutar el ajuste antes del 20 de octubre de 2026** (30 días), en una sola
+   operación, y reportar al comité el costo efectivamente incurrido contra los
+   80 millones presupuestados.
+2. **Operar con banda de no-acción de ±5 puntos por emisor:** no se transa
+   mientras el peso de mercado se mantenga dentro de la banda, aunque el modelo
+   sugiera otra cosa.
+3. **Revisar la cartera dos veces al año, el 31 de diciembre de 2026 y el 30 de
+   junio de 2027**, con la ventana de estimación y la fecha de corte declaradas
+   **antes** de correr el cálculo, no después de ver los resultados.
+4. **Traer al comité, en la sesión siguiente a cada revisión**, la comparación
+   entre la rentabilidad prometida por el modelo y la efectivamente obtenida. Si
+   la brecha supera 1 punto porcentual en dos revisiones consecutivas, el área se
+   compromete a traer una propuesta de cambio de método, no de pesos.
+:::
+
+```{r}
+#| label: parte7-ventana125
+# Las dos ventanas de 125 ruedas: la mas reciente y la que termina 100 ruedas
+# antes del final del panel.
+ventana_125 <- function(fin) {
+  win <- r[(fin - 124):fin, ]
+  list(w = frontera(Sig = cov(win) * 252, med = colMeans(win) * 252),
+       desde = fechas_r[fin - 124], hasta = fechas_r[fin])
+}
+
+v_reciente   <- ventana_125(n)
+v_desplazada <- ventana_125(n - 100)
+
+round(rbind(recientes_125   = v_reciente$w * 100,
+            desplazada_125  = v_desplazada$w * 100), 2)
+c(recientes = paste(v_reciente$desde, "a", v_reciente$hasta),
+  desplazada = paste(v_desplazada$desde, "a", v_desplazada$hasta))
+
+# El mismo ejercicio en todos los cortes posibles del panel: cuanto se mueve el
+# peso de Bogota solo por elegir donde parar el reloj.
+cortes <- seq(125, n, by = 25)
+bogota <- sapply(cortes, function(f) ventana_125(f)$w[2])
+round(c(n_cortes = length(cortes), min_pct = min(bogota) * 100,
+        mediana_pct = median(bogota) * 100, max_pct = max(bogota) * 100), 2)
+```
+
 **7.4** Un miembro del comité propone una ventana de **125 ruedas** que deja al
 Banco de Bogotá con el **76,59 %** de la cartera. Cuidado al reproducirlo: no son
 las 125 ruedas **más recientes**, que dan un 50,49 % —también alto y también
@@ -1229,6 +1464,20 @@ es parte de la objeción, y conviene que aparezca en ella.
 
 Escriba el **párrafo de la objeción**, con las cifras que la sostienen. Debe caber
 en seis líneas y no puede usar la palabra «sobreajuste» — tiene que explicarla.
+
+> **Párrafo de la objeción.** La ventana de 125 ruedas no entrega un resultado:
+> entrega cualquier resultado que se le pida. Con las 125 ruedas más recientes
+> (27-jun-2025 a 30-dic-2025) el Banco de Bogotá pesa 50,49 %; corriendo esa
+> misma ventana apenas 100 ruedas hacia atrás (30-ene-2025 a 1-ago-2025) pesa
+> 76,59 %; y barriendo los 72 cortes posibles del panel, su peso va del 17,22 %
+> al 77,50 %, con mediana en 39,08 %. Es la misma longitud de ventana, el mismo
+> método y los mismos cuatro emisores: lo único que cambia es dónde se decidió
+> parar el reloj. Un procedimiento que devuelve 17 % o 78 % según esa elección no
+> está midiendo qué emisor es más estable —está copiando el accidente particular
+> del tramo que se le mostró, y ese accidente no vuelve a ocurrir hacia adelante—.
+> Antes de discutir si el 76,59 % es mucho o poco, el comité debería exigir que
+> la longitud de la ventana y su fecha de corte queden declaradas por escrito
+> **antes** de correr el cálculo.
 
 ---
 
